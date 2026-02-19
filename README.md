@@ -27,6 +27,7 @@ Problem set objective: Gain hands-on experience in data collection, storage, pro
 
 - Keep the current baseline approach for this round.
 - In the next round, upgrade `10_extract_1996.py` with OCR-based PDF extraction and stronger parsing logic for higher data quality.
+- Improve result visualization so outputs can be reviewed visually (charts/dashboard-style artifacts, not text-only summaries).
 
 ## Data Source Status (Checked on 2026-02-19)
 

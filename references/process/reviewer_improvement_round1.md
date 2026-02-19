@@ -23,9 +23,11 @@ Goal:
 - Action:
   - Generate actual chart artifact (e.g., matplotlib PNG or HTML chart).
   - Keep top-N configurable and include labels.
+  - Add a consolidated visual result view (dashboard-style HTML or multi-chart report) for quick review.
 - Done when:
   - A rendered chart file is produced in `data/output/`.
   - Chart is readable without opening raw text.
+  - At least one integrated visual summary artifact is generated from key outputs (12, 13, 15).
 
 3. Improve parser depth for Part I (`03_parse.py`, `08_export.py`) - **P1**
 - Why: Export quality is limited by sparse fields (`description`, `url`).
