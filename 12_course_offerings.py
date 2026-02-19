@@ -27,6 +27,20 @@ def counts_by_dept(rows: list[dict]) -> Counter:
     return c
 
 
+def reason_for_delta(dept: str, delta: int) -> str:
+    if dept == "6" and delta < 0:
+        return "Likely affected by MIT EECS renumbering/split and extraction-format differences."
+    if delta > 40:
+        return "Strong growth likely tied to newer interdisciplinary/program tracks and catalog expansion."
+    if delta < -20:
+        return "Large decrease may reflect renumbering, restructuring, or extraction coverage differences."
+    if delta > 0:
+        return "Moderate increase; likely incremental curriculum growth."
+    if delta < 0:
+        return "Moderate decrease; may indicate consolidation or catalog maintenance changes."
+    return "Relatively stable between the two snapshots."
+
+
 def main() -> None:
     ensure_directories()
     f1996 = OUTPUT_DIR / "10_mit_1996.json"
@@ -53,11 +67,21 @@ def main() -> None:
 
     top_up = rows[:10]
     top_down = sorted(rows, key=lambda x: x[3])[:10]
-    lines = ["Course Offerings Over Time", "==========================", "", "Top Expanded Departments:"]
-    lines.extend([f"- {d}: {n96} -> {n24} (delta {delta:+d})" for d, n96, n24, delta in top_up])
+    lines = [
+        "Course Offerings Over Time",
+        "==========================",
+        "",
+        "Top Expanded Departments:",
+    ]
+    lines.extend([f"- {d}: {n96} -> {n24} (delta {delta:+d}) | {reason_for_delta(d, delta)}" for d, n96, n24, delta in top_up])
     lines.append("")
     lines.append("Top Reduced Departments:")
-    lines.extend([f"- {d}: {n96} -> {n24} (delta {delta:+d})" for d, n96, n24, delta in top_down])
+    lines.extend([f"- {d}: {n96} -> {n24} (delta {delta:+d}) | {reason_for_delta(d, delta)}" for d, n96, n24, delta in top_down])
+
+    lines.append("")
+    lines.append("Interpretation Notes:")
+    lines.append("- Differences mix true curriculum change with catalog formatting/numbering evolution.")
+    lines.append("- Extreme deltas should be interpreted with caution unless cross-validated with historical departmental metadata.")
 
     out_txt = OUTPUT_DIR / "12_course_offerings_summary.txt"
     write_text(out_txt, "\n".join(lines) + "\n")

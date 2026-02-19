@@ -25,7 +25,8 @@ from catalog_utils import INTERIM_DIR, OUTPUT_DIR, ensure_directories, read_json
 
 SOURCE = "ne"
 
-SCHEMA_DOC = """Dataset: ne_catalog.json
+
+SCHEMA_DOC_TEMPLATE = """Dataset: {dataset_name}
 
 Fields:
 - source (str): data source identifier
@@ -35,6 +36,11 @@ Fields:
 - title (str): course title
 - description (str): course description text
 - url (str): source url when known
+
+Field Completeness:
+- records: {records}
+- description_non_empty: {desc_non_empty} ({desc_pct:.2f}%)
+- url_non_empty: {url_non_empty} ({url_pct:.2f}%)
 """
 
 
@@ -48,8 +54,23 @@ def main() -> None:
         raise SystemExit(f"Missing {in_file}. Run 04_clean.py first.")
 
     rows = read_json(in_file)
+    total = len(rows)
+    desc_non_empty = sum(1 for r in rows if str(r.get("description", "")).strip())
+    url_non_empty = sum(1 for r in rows if str(r.get("url", "")).strip())
+    desc_pct = (desc_non_empty / total * 100) if total else 0.0
+    url_pct = (url_non_empty / total * 100) if total else 0.0
+
+    schema_doc = SCHEMA_DOC_TEMPLATE.format(
+        dataset_name=out_json.name,
+        records=total,
+        desc_non_empty=desc_non_empty,
+        desc_pct=desc_pct,
+        url_non_empty=url_non_empty,
+        url_pct=url_pct,
+    )
+
     write_json(out_json, rows)
-    write_text(out_doc, SCHEMA_DOC)
+    write_text(out_doc, schema_doc)
     print(f"Exported {len(rows)} records -> {out_json}")
     print(f"Wrote schema doc -> {out_doc}")
 

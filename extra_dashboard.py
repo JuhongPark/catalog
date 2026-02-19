@@ -1,0 +1,172 @@
+# -----------------------------------------------
+#  17. Extra Dashboard (Non-statement extension)
+#
+#  Note:
+#  - This file is an extra artifact for visual review.
+#  - It is not part of the original 01~16 statement files.
+#  - Core statement visualization remains in 07_visualization.py.
+# -----------------------------------------------
+
+from __future__ import annotations
+
+import csv
+import re
+from html import escape
+
+from catalog_utils import BASE_DIR, OUTPUT_DIR, ensure_directories, write_text
+
+RESULTS_DIR = BASE_DIR / "results"
+PROCESS_DIR = BASE_DIR / "references" / "process"
+SOURCE = "ne"
+
+
+def read_word_freq(path, top_n: int = 25) -> list[tuple[str, int]]:
+    rows: list[tuple[str, int]] = []
+    if not path.exists():
+        return rows
+    with path.open("r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            rows.append((row["word"], int(row["count"])))
+    return rows[:top_n]
+
+
+def read_delta_csv(path, key: str, top_n: int = 12) -> list[tuple[str, int]]:
+    rows: list[tuple[str, int]] = []
+    if not path.exists():
+        return rows
+    with path.open("r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            rows.append((row[key], int(row["delta"])))
+    rows.sort(key=lambda x: x[1], reverse=True)
+    return rows[:top_n]
+
+
+def read_round_scores() -> list[tuple[str, float]]:
+    scores: list[tuple[str, float]] = []
+    files = sorted(PROCESS_DIR.glob("grader_scorecard_round*.md"))
+    for path in files:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        round_match = re.search(r"round(\d+)\.md$", path.name, flags=re.IGNORECASE)
+        avg_match = re.search(r"Average score:\s*\*\*([0-9]+(?:\.[0-9]+)?)\s*/\s*5", text, flags=re.IGNORECASE)
+        if not round_match or not avg_match:
+            continue
+        scores.append((f"Round {int(round_match.group(1))}", float(avg_match.group(1))))
+    return scores
+
+
+def render_bar_list(rows: list[tuple[str, int]], color: str) -> str:
+    if not rows:
+        return "<p>No data</p>"
+    max_val = max(v for _, v in rows) or 1
+    out = []
+    for label, value in rows:
+        width = int((value / max_val) * 100)
+        out.append(
+            f"<div class='bar-row'><span class='label'>{escape(label)}</span>"
+            f"<div class='bar-wrap'><div class='bar' style='width:{width}%;background:{color}'></div></div>"
+            f"<span class='value'>{value}</span></div>"
+        )
+    return "\n".join(out)
+
+
+def render_score_trend(rows: list[tuple[str, float]]) -> str:
+    if not rows:
+        return "<p>No round score data available.</p>"
+    out = []
+    prev = None
+    for label, score in rows:
+        width = int((score / 5.0) * 100)
+        delta = ""
+        if prev is not None:
+            delta = f" ({score - prev:+.2f})"
+        out.append(
+            f"<div class='bar-row'><span class='label'>{escape(label)}</span>"
+            f"<div class='bar-wrap'><div class='bar' style='width:{width}%;background:#6a4c93'></div></div>"
+            f"<span class='value'>{score:.2f}/5{delta}</span></div>"
+        )
+        prev = score
+    return "\n".join(out)
+
+
+def build_html(freq_rows, offering_rows, title_rows, breadth_summary, score_rows) -> str:
+    return f"""<!doctype html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8' />
+  <meta name='viewport' content='width=device-width, initial-scale=1' />
+  <title>Catalog Analysis Dashboard</title>
+  <style>
+    :root {{ --bg:#f7f4ed; --card:#fffdf8; --ink:#1f2933; --muted:#5f6c72; --line:#dfd8c8; }}
+    body {{ margin:0; font-family: 'Trebuchet MS', Verdana, sans-serif; background: linear-gradient(180deg, #f7f4ed 0%, #efe9db 100%); color:var(--ink); }}
+    .wrap {{ max-width:1100px; margin:0 auto; padding:24px; }}
+    h1 {{ margin:0 0 12px; font-size:28px; }}
+    .sub {{ color:var(--muted); margin-bottom:20px; }}
+    .grid {{ display:grid; grid-template-columns: 1fr; gap:14px; }}
+    @media (min-width: 900px) {{ .grid {{ grid-template-columns: 1fr 1fr; }} }}
+    .card {{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; box-shadow: 0 6px 20px rgba(40,40,40,.05); }}
+    .supplemental {{ margin-top:14px; }}
+    h2 {{ margin:0 0 12px; font-size:18px; }}
+    .bar-row {{ display:grid; grid-template-columns: 160px 1fr 66px; gap:8px; align-items:center; margin:6px 0; }}
+    .label {{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+    .bar-wrap {{ height:10px; background:#ece4d5; border-radius:999px; overflow:hidden; }}
+    .bar {{ height:100%; border-radius:999px; }}
+    .value {{ text-align:right; font-size:12px; color:var(--muted); }}
+    pre {{ white-space:pre-wrap; font-size:12px; background:#f6f2e7; border:1px solid var(--line); padding:10px; border-radius:8px; }}
+  </style>
+</head>
+<body>
+  <div class='wrap'>
+    <h1>Catalog Analysis Dashboard</h1>
+    <div class='sub'>Generated by `extra_dashboard.py` from outputs of 06, 12, 13, 15 and round scorecards.</div>
+    <div class='grid'>
+      <section class='card'>
+        <h2>Top Words in Course Titles (NE)</h2>
+        {render_bar_list(freq_rows, '#2a6f8f')}
+      </section>
+      <section class='card'>
+        <h2>Top Department Growth (MIT 1996→2024)</h2>
+        {render_bar_list(offering_rows, '#b85c38')}
+      </section>
+      <section class='card'>
+        <h2>Top Rising Title Terms (MIT)</h2>
+        {render_bar_list(title_rows, '#3f7d20')}
+      </section>
+      <section class='card'>
+        <h2>Curriculum Breadth Summary</h2>
+        <pre>{escape(breadth_summary)}</pre>
+      </section>
+    </div>
+    <section class='card supplemental'>
+      <h2>Supplemental: Quality Score Trend by Round</h2>
+      {render_score_trend(score_rows)}
+    </section>
+  </div>
+</body>
+</html>
+"""
+
+
+def main() -> None:
+    ensure_directories()
+    freq_rows = read_word_freq(OUTPUT_DIR / f"{SOURCE}_title_freq.csv", top_n=25)
+    offering_rows = [x for x in read_delta_csv(OUTPUT_DIR / "12_course_offerings_delta.csv", "dept", top_n=12) if x[1] > 0]
+    title_rows = [x for x in read_delta_csv(OUTPUT_DIR / "13_title_evolution.csv", "word", top_n=14) if x[1] > 0]
+    score_rows = read_round_scores()
+    breadth_path = OUTPUT_DIR / "15_curriculum_breadth.txt"
+    breadth_summary = breadth_path.read_text(encoding="utf-8") if breadth_path.exists() else "No breadth summary yet."
+
+    html = build_html(freq_rows, offering_rows, title_rows, breadth_summary, score_rows)
+
+    runtime_file = OUTPUT_DIR / "analysis_dashboard.html"
+    artifact_file = RESULTS_DIR / "analysis_dashboard.html"
+    write_text(runtime_file, html)
+    write_text(artifact_file, html)
+
+    print(f"Saved dashboard -> {runtime_file}")
+    print(f"Saved shareable dashboard -> {artifact_file}")
+
+
+if __name__ == "__main__":
+    main()

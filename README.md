@@ -55,3 +55,9 @@ Problem set objective: Gain hands-on experience in data collection, storage, pro
 ## Active Run Choice
 
 - Current Part I execution source: `NE (Northeastern)`.
+
+## Extra Files
+
+- `extra_dashboard.py` is an extra extension file for integrated visual review.
+- It is outside the original statement scope (`01`~`16`).
+- Shareable visualization outputs are consolidated under `results/` at the repository root.

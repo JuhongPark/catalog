@@ -46,6 +46,13 @@ def main() -> None:
     lines.append(f"New by 2024: {len(new)}")
     lines.extend([f"- {x}" for x in new[:200]])
 
+    lines.append("")
+    lines.append("Reasoned Patterns:")
+    lines.append("- Many differences are likely from renumbering and catalog reorganization rather than pure creation/removal.")
+    lines.append("- Newer codes often cluster around data/AI, interdisciplinary, and applied professional tracks.")
+    lines.append("- Discontinued-style codes may represent migrated prefixes or merged subject structures.")
+    lines.append("- A stronger conclusion requires a formal historical crosswalk between old and new numbering systems.")
+
     out_txt = OUTPUT_DIR / "14_new_and_old.txt"
     write_text(out_txt, "\n".join(lines) + "\n")
     print(f"Wrote {out_txt}")

@@ -10,9 +10,23 @@
 
 from __future__ import annotations
 
-from catalog_utils import INTERIM_DIR, OUTPUT_DIR, ensure_directories, word_counts, write_csv
+from catalog_utils import INTERIM_DIR, OUTPUT_DIR, DEFAULT_STOPWORDS, ensure_directories, word_counts, write_csv
 
 SOURCE = "ne"
+
+DOMAIN_STOPWORDS = {
+    "course",
+    "courses",
+    "hour",
+    "hours",
+    "elective",
+    "introduction",
+    "seminar",
+    "lab",
+    "labs",
+    "topics",
+    "study",
+}
 
 
 def main() -> None:
@@ -24,7 +38,8 @@ def main() -> None:
         raise SystemExit(f"Missing {in_file}. Run 05_extract.py first.")
 
     titles = [line.strip() for line in in_file.read_text(encoding="utf-8").splitlines() if line.strip()]
-    counts = word_counts(titles)
+    stopwords = set(DEFAULT_STOPWORDS) | DOMAIN_STOPWORDS
+    counts = word_counts(titles, stopwords=stopwords)
 
     rows = sorted(counts.items(), key=lambda x: (-x[1], x[0]))
     write_csv(out_file, ["word", "count"], rows)
