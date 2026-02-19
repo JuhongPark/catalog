@@ -56,6 +56,37 @@ def read_round_scores() -> list[tuple[str, float]]:
     return scores
 
 
+def read_scorecard_summary() -> tuple[str, str, list[str]]:
+    path = PROCESS_DIR / "grader_scorecard_round2.md"
+    if not path.exists():
+        return ("N/A", "N/A", [])
+    text = path.read_text(encoding="utf-8", errors="replace")
+    total_match = re.search(r"Total score:\s*\*\*([0-9]+\s*/\s*[0-9]+)\*\*", text, flags=re.IGNORECASE)
+    avg_match = re.search(r"Average score:\s*\*\*([0-9]+(?:\.[0-9]+)?\s*/\s*5(?:\.00)?)\*\*", text, flags=re.IGNORECASE)
+    top_match = re.search(r"Top improvements achieved:\s*(.*?)(?:\n\n|\Z)", text, flags=re.IGNORECASE | re.DOTALL)
+    total = total_match.group(1) if total_match else "N/A"
+    avg = avg_match.group(1) if avg_match else "N/A"
+    tops: list[str] = []
+    if top_match:
+        for line in top_match.group(1).splitlines():
+            line = line.strip()
+            if line.startswith("-"):
+                tops.append(line[1:].strip())
+    return (total, avg, tops)
+
+
+def read_reviewer_priorities() -> list[str]:
+    path = PROCESS_DIR / "reviewer_improvement_round2.md"
+    if not path.exists():
+        return []
+    out: list[str] = []
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip()
+        if re.match(r"^\d+\.\s", line):
+            out.append(line)
+    return out
+
+
 def render_bar_list(rows: list[tuple[str, int]], color: str) -> str:
     if not rows:
         return "<p>No data</p>"
@@ -90,7 +121,19 @@ def render_score_trend(rows: list[tuple[str, float]]) -> str:
     return "\n".join(out)
 
 
-def build_html(freq_rows, offering_rows, title_rows, breadth_summary, score_rows) -> str:
+def build_html(
+    freq_rows,
+    offering_rows,
+    title_rows,
+    breadth_summary,
+    score_rows,
+    total_score: str,
+    avg_score: str,
+    top_improvements: list[str],
+    reviewer_priorities: list[str],
+) -> str:
+    top_html = "".join(f"<li>{escape(item)}</li>" for item in top_improvements) or "<li>N/A</li>"
+    pri_html = "".join(f"<li>{escape(item)}</li>" for item in reviewer_priorities[:4]) or "<li>N/A</li>"
     return f"""<!doctype html>
 <html lang='en'>
 <head>
@@ -137,6 +180,14 @@ def build_html(freq_rows, offering_rows, title_rows, breadth_summary, score_rows
         <h2>Curriculum Breadth Summary</h2>
         <pre>{escape(breadth_summary)}</pre>
       </section>
+      <section class='card'>
+        <h2>Round 2 Grading & Evaluation</h2>
+        <p><b>Total score:</b> {escape(total_score)}<br/><b>Average score:</b> {escape(avg_score)}</p>
+        <p><b>Top improvements achieved</b></p>
+        <ul>{top_html}</ul>
+        <p><b>Next priorities</b></p>
+        <ul>{pri_html}</ul>
+      </section>
     </div>
     <section class='card supplemental'>
       <h2>Supplemental: Quality Score Trend by Round</h2>
@@ -154,10 +205,22 @@ def main() -> None:
     offering_rows = [x for x in read_delta_csv(OUTPUT_DIR / "12_course_offerings_delta.csv", "dept", top_n=12) if x[1] > 0]
     title_rows = [x for x in read_delta_csv(OUTPUT_DIR / "13_title_evolution.csv", "word", top_n=14) if x[1] > 0]
     score_rows = read_round_scores()
+    total_score, avg_score, top_improvements = read_scorecard_summary()
+    reviewer_priorities = read_reviewer_priorities()
     breadth_path = OUTPUT_DIR / "15_curriculum_breadth.txt"
     breadth_summary = breadth_path.read_text(encoding="utf-8") if breadth_path.exists() else "No breadth summary yet."
 
-    html = build_html(freq_rows, offering_rows, title_rows, breadth_summary, score_rows)
+    html = build_html(
+        freq_rows,
+        offering_rows,
+        title_rows,
+        breadth_summary,
+        score_rows,
+        total_score,
+        avg_score,
+        top_improvements,
+        reviewer_priorities,
+    )
 
     runtime_file = OUTPUT_DIR / "analysis_dashboard.html"
     artifact_file = RESULTS_DIR / "analysis_dashboard.html"
