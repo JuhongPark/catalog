@@ -56,10 +56,15 @@ def read_round_scores() -> list[tuple[str, float]]:
     return scores
 
 
-def read_scorecard_summary() -> tuple[str, str, list[str]]:
-    path = PROCESS_DIR / "grader_scorecard_round2.md"
+def read_scorecard_summary() -> tuple[str, str, list[str], str]:
+    files = sorted(PROCESS_DIR.glob("grader_scorecard_round*.md"))
+    if not files:
+        return ("N/A", "N/A", [], "N/A")
+    path = files[-1]
     if not path.exists():
-        return ("N/A", "N/A", [])
+        return ("N/A", "N/A", [], "N/A")
+    round_match = re.search(r"round(\d+)\.md$", path.name, flags=re.IGNORECASE)
+    round_label = f"Round {round_match.group(1)}" if round_match else "Latest Round"
     text = path.read_text(encoding="utf-8", errors="replace")
     total_match = re.search(r"Total score:\s*\*\*([0-9]+\s*/\s*[0-9]+)\*\*", text, flags=re.IGNORECASE)
     avg_match = re.search(r"Average score:\s*\*\*([0-9]+(?:\.[0-9]+)?\s*/\s*5(?:\.00)?)\*\*", text, flags=re.IGNORECASE)
@@ -72,11 +77,14 @@ def read_scorecard_summary() -> tuple[str, str, list[str]]:
             line = line.strip()
             if line.startswith("-"):
                 tops.append(line[1:].strip())
-    return (total, avg, tops)
+    return (total, avg, tops, round_label)
 
 
 def read_reviewer_priorities() -> list[str]:
-    path = PROCESS_DIR / "reviewer_improvement_round2.md"
+    files = sorted(PROCESS_DIR.glob("reviewer_improvement_round*.md"))
+    if not files:
+        return []
+    path = files[-1]
     if not path.exists():
         return []
     out: list[str] = []
@@ -131,6 +139,7 @@ def build_html(
     avg_score: str,
     top_improvements: list[str],
     reviewer_priorities: list[str],
+    score_round_label: str,
 ) -> str:
     top_html = "".join(f"<li>{escape(item)}</li>" for item in top_improvements) or "<li>N/A</li>"
     pri_html = "".join(f"<li>{escape(item)}</li>" for item in reviewer_priorities[:4]) or "<li>N/A</li>"
@@ -181,7 +190,7 @@ def build_html(
         <pre>{escape(breadth_summary)}</pre>
       </section>
       <section class='card'>
-        <h2>Round 2 Grading & Evaluation</h2>
+        <h2>{escape(score_round_label)} Grading & Evaluation</h2>
         <p><b>Total score:</b> {escape(total_score)}<br/><b>Average score:</b> {escape(avg_score)}</p>
         <p><b>Top improvements achieved</b></p>
         <ul>{top_html}</ul>
@@ -205,7 +214,7 @@ def main() -> None:
     offering_rows = [x for x in read_delta_csv(OUTPUT_DIR / "12_course_offerings_delta.csv", "dept", top_n=12) if x[1] > 0]
     title_rows = [x for x in read_delta_csv(OUTPUT_DIR / "13_title_evolution.csv", "word", top_n=14) if x[1] > 0]
     score_rows = read_round_scores()
-    total_score, avg_score, top_improvements = read_scorecard_summary()
+    total_score, avg_score, top_improvements, score_round_label = read_scorecard_summary()
     reviewer_priorities = read_reviewer_priorities()
     breadth_path = OUTPUT_DIR / "15_curriculum_breadth.txt"
     breadth_summary = breadth_path.read_text(encoding="utf-8") if breadth_path.exists() else "No breadth summary yet."
@@ -220,6 +229,7 @@ def main() -> None:
         avg_score,
         top_improvements,
         reviewer_priorities,
+        score_round_label,
     )
 
     runtime_file = OUTPUT_DIR / "analysis_dashboard.html"
