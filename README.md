@@ -13,3 +13,12 @@ Problem set objective: Gain hands-on experience in data collection, storage, pro
 - Project plan: `references/process/project_plan.md`
 - Persona definitions: `references/process/personas.md`
 - Imported statement reference: `references/google-docs/1kxmwf7e-cLBEEC92QaNUIOeIYWupwPOSnFPnGZrKHfI/document.md`
+
+## External Source Links
+
+- MIT Course Catalog 1996 (PDF index): https://onexi.org/catalog/pdf/index.html
+
+## Documentation Policy
+
+- Do not delete original statement comments in project script files.
+- Original comments are part of the project description/reference context and must be preserved.
