@@ -1,0 +1,7 @@
+# Python cache/artifacts
+__pycache__/
+*.py[cod]
+
+# Local runtime outputs
+data/
+logs/

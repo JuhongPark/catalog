@@ -7,3 +7,56 @@
 #  catalog over time. Relate these changes to 
 #  broader trends in education and industry.
 # -----------------------------------------------
+
+Summary and Reflection
+
+This project compared MIT subject data extracted from a 1996 catalog source and
+the current online catalog (2024/2026 listing endpoint). The analysis indicates
+major shifts in both department-level offerings and title vocabulary.
+
+1. Major departmental shifts
+- Largest increases included Course 20 (+85), Course 7 (+85), Course 10 (+74),
+  and Course 3 (+46), suggesting stronger growth in life sciences, biology,
+  chemical engineering, and materials-related areas.
+- The largest decrease was Course 6 (-75), which is likely affected by
+  renumbering/restructuring effects and extraction mismatch across eras.
+
+2. Terminology changes in titles
+- Rising terms included: biology, science, engineering, design, materials,
+  data, systems, learning, climate, and computational.
+- Declining terms included: special, problems, seminar, advanced, theory, and
+  management-oriented labels in this extraction output.
+- Overall, the vocabulary trend points toward modern computational and
+  interdisciplinary themes.
+
+3. New and discontinued subjects
+- Discontinued since 1996: 885 subject codes (by direct code set difference).
+- New by 2024: 1251 subject codes.
+- These large numbers indicate substantial catalog restructuring, renumbering,
+  and expansion over time.
+
+4. Curriculum breadth interpretation
+- Unique title terms:
+  - 1996: 2114
+  - 2024: 1140
+- Entropy:
+  - 1996: 9.8468
+  - 2024: 8.8623
+- By this metric, 2024 appears more specialized than 1996.
+
+5. Link to education/industry trends
+- The rise of terms like data, learning, computational, and climate aligns with
+  industry demand in AI/data-intensive fields, sustainability, and
+  cross-disciplinary engineering.
+- Growth in life-science-related terms also aligns with biotechnology and
+  health-tech expansion.
+
+Data quality note
+- 1996 extraction in this round used a baseline PDF text pipeline without OCR.
+  Some comparisons may include noise from formatting and historical catalog
+  structure differences.
+
+Improvement feedback for next round
+- Keep this round's baseline approach.
+- Upgrade 10_extract_1996.py with OCR-based PDF extraction and stronger parsing
+  logic in the next round.

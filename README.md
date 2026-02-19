@@ -22,3 +22,35 @@ Problem set objective: Gain hands-on experience in data collection, storage, pro
 
 - Do not delete original statement comments in project script files.
 - Original comments are part of the project description/reference context and must be preserved.
+
+## Feedback For Next Round
+
+- Keep the current baseline approach for this round.
+- In the next round, upgrade `10_extract_1996.py` with OCR-based PDF extraction and stronger parsing logic for higher data quality.
+
+## Data Source Status (Checked on 2026-02-19)
+
+- Harvard (`https://courses.my.harvard.edu`): blocked for this project automation path due to PeopleSoft sign-in/cookie gate; public bulk course extraction is not available from the unauthenticated entry page.
+- BU (`https://www.bu.edu/academics/cas/courses/`): reachable and parseable (department links and course entries confirmed).
+- Northeastern (`https://catalog.northeastern.edu/course-descriptions/`): reachable and parseable (subject index and courseblock markup confirmed).
+
+## Part I Source Ranking (Checked on 2026-02-19)
+
+1. NE (Northeastern) - 1st choice
+- Most consistent HTML structure (`courseblock`, `courseblocktitle`) for code/title extraction.
+- Lower parsing noise and lower selector-maintenance risk across 01~08.
+- Best fit for stable end-to-end completion of collection, parsing, analysis, and export.
+
+2. BU (Boston University) - 2nd choice
+- Publicly reachable and contains rich course data.
+- Usable extraction patterns exist, but page content includes more mixed/long narrative text and metadata noise.
+- Parsing remains feasible, but cleaning and title extraction are more error-prone than NE.
+
+3. Harvard - 3rd choice
+- Current unauthenticated path is gated by PeopleSoft login/cookie requirements.
+- Automated public bulk extraction is blocked from the accessible entry points tested.
+- Highest implementation risk for this project timeline unless authenticated/manual workflow is introduced.
+
+## Active Run Choice
+
+- Current Part I execution source: `NE (Northeastern)`.
