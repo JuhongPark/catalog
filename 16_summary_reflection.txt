@@ -1,38 +1,29 @@
-# -----------------------------------------------
-#  16. Summary and Reflection:
-# 
-#  Summarize your findings from the 
-#  previous tasks, reflecting on the most 
-#  significant changes in the MIT course 
-#  catalog over time. Relate these changes to 
-#  broader trends in education and industry.
-# -----------------------------------------------
-
 Summary and Reflection
 
 This project compared MIT subject data extracted from a 1996 catalog source and
-the current online catalog (2024/2026 listing endpoint). The analysis indicates
-major shifts in both department-level offerings and title vocabulary.
+the current MIT online catalog endpoint. The analysis shows large shifts in
+department-level offerings, title vocabulary, and subject-code inventories.
 
 1. Major departmental shifts
-- Largest increase remained Course 20 (+85), while many other departments showed
-  apparent decreases in this extraction snapshot.
-- The largest decrease was Course 6 (-276), likely affected by
-  renumbering/restructuring effects and extraction-format differences across eras.
+- The largest increase in this extraction was Course 20 (from 1 to 86, +85).
+- The largest decrease was Course 6 (from 280 to 4, -276), with other major
+  decreases in Courses 15, 18, 4, 8, and 1.
+- These deltas likely mix real curriculum change with renumbering and
+  historical catalog structure differences.
 
 2. Terminology changes in titles
-- Rising terms included: biology, science, engineering, design, materials,
-  data, systems, learning, climate, and computational.
-- Declining terms included: special, problems, seminar, advanced, theory, and
-  management-oriented labels in this extraction output.
-- Overall, the vocabulary trend points toward modern computational and
-  interdisciplinary themes.
+- Rising terms included biology, biological, science, energy, data, learning,
+  climate, computational, machine, and ethics.
+- Declining terms were dominated by metadata-like tokens (for example prereq,
+  permission, spring, fall), plus broad terms such as seminar and theory.
+- The lexical trend indicates stronger emphasis on computational and
+  interdisciplinary themes in the modern catalog.
 
 3. New and discontinued subjects
-- Discontinued since 1996: 2784 subject codes (by direct code set difference).
-- New by 2024: 852 subject codes.
-- These large numbers indicate substantial catalog restructuring, renumbering,
-  and expansion over time.
+- Discontinued since 1996 (code-set difference): 1956
+- New by 2024 (code-set difference): 1029
+- The scale of change supports the interpretation that MIT's catalog has seen
+  substantial restructuring over time.
 
 4. Curriculum breadth interpretation
 - Unique title terms:
@@ -41,21 +32,16 @@ major shifts in both department-level offerings and title vocabulary.
 - Entropy:
   - 1996: 9.9428
   - 2024: 8.8623
-- By this metric, 2024 appears more specialized than 1996.
+- On this token-distribution metric, 2024 appears more specialized than 1996.
 
-5. Link to education/industry trends
-- The rise of terms like data, learning, computational, and climate aligns with
-  industry demand in AI/data-intensive fields, sustainability, and
-  cross-disciplinary engineering.
-- Growth in life-science-related terms also aligns with biotechnology and
-  health-tech expansion.
+5. Connection to broader trends
+- Growth of terms such as data, learning, computational, and climate aligns
+  with AI/data-intensive work, sustainability priorities, and
+  interdisciplinary engineering.
+- Increased life-science vocabulary aligns with biotechnology and health-tech
+  expansion.
 
 Data quality note
-- 1996 extraction in this round improved description capture from PDF text, but
-  OCR-grade cleanup is still not applied. Comparisons may still include noise
-  from formatting and historical catalog structure differences.
-
-Improvement feedback for next round
-- Keep this round's baseline approach.
-- Upgrade 10_extract_1996.py with OCR-based PDF extraction and stronger parsing
-  logic in the next round.
+- 1996 description coverage improved versus early rounds, but OCR-backed
+  cleanup is still not integrated. Some comparisons remain sensitive to
+  extraction noise and formatting artifacts.

@@ -20,6 +20,8 @@
 ### Rules
 - Focus on planning, not implementation details.
 - Use file/output-level specificity instead of abstract phrasing.
+- Reject plan items that are not directly tied to statement goals or grading criteria.
+- Include a brief "goal alignment + grading-risk" check per major task.
 
 ## Reviewer
 ### Role
@@ -38,6 +40,7 @@
 ### Rules
 - Feedback must be actionable at task level.
 - Do not only criticize; include concrete fix direction and expected outcome.
+- Remove or rewrite plan items that can trigger deductions (unclear evidence, unverifiable outcomes, out-of-scope work).
 
 ## Builder
 ### Role
@@ -53,6 +56,7 @@
 ### Rules
 - Do not make arbitrary changes outside the agreed plan scope.
 - Keep implementation reproducible.
+- Do not complete tasks unless the plan's Definition of Done is objectively satisfied; otherwise report partial completion with gaps.
 
 ## Grader
 ### Role

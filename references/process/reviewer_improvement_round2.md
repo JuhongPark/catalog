@@ -20,3 +20,6 @@ Input:
 4. Semantic text normalization (`06`, `13`, `15`) - **P2**
 - Optional lemmatization/stemming to improve term aggregation.
 - Done when equivalent inflections are merged in frequency outputs.
+
+## Note
+- Follow the global planning/grading guardrails defined in `references/process/project_plan.md` and role rules in `references/process/personas.md`.

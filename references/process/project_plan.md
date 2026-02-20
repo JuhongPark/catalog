@@ -17,6 +17,11 @@
 - Start another round only when explicitly instructed by the user.
 - Grader must not evaluate based on personal preference or style taste outside the statement.
 - Reviewer feedback must be actionable and specific.
+- Before executing any plan item, run a mandatory goal-alignment check: if the work does not directly support the statement goal or grading criteria, do not execute it.
+- Enforce strict scope control: avoid side tasks, unrelated refactors, and non-required enhancements.
+- Run a grading-risk check before completion: verify evidence, output integrity, and reproducibility to prevent point deductions.
+- Mark tasks complete only when Definition of Done is objectively met; otherwise mark as partial with explicit remaining gaps.
+- Run a pre-submit sanity check against statement requirements, rubric constraints, and required output format.
 
 ## Deliverable Format
 - Planner: task checklist, priorities, and Definition of Done (DoD)
