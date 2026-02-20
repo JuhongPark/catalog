@@ -6,7 +6,7 @@ in department-level offerings, title vocabulary, and subject-code inventories.
 
 1. Major departmental shifts
 - The largest increase in this extraction was Course 20 (from 1 to 86, +85).
-- The largest decrease after crosswalk normalization was 6_EECS (from 206 to
+- The largest decrease after crosswalk normalization was 6 (from 206 to
   68, -138), with additional major decreases in Courses 15, 4, 1, and 12.
 - These deltas likely mix real curriculum change with renumbering and
   extraction-coverage differences.
@@ -47,3 +47,19 @@ Data quality note
 - OCR runtime is now active (`tesseract` available), and OCR fallback is
   integrated into extraction. Current records are generated with mixed text
   sources (PDF text + OCR fallback), with measurable coverage/confidence gains.
+
+Evidence sources used for this summary
+- `data/output/10_mit_1996_extraction_report.txt`
+- `data/output/10_mit_1996_confidence_comparison.txt`
+- `data/output/11_mit_2024.json`
+- `data/output/12_course_offerings_summary.txt`
+- `data/output/13_title_evolution_summary.txt`
+- `data/output/14_new_and_old.txt`
+- `data/output/15_curriculum_breadth.txt`
+- `data/output/pipeline_snapshot.json`
+
+Limitations and next-step recommendation
+- Historical crosswalk quality and legacy catalog formatting still influence
+  several deltas and lexical trends.
+- Next round should keep dual reporting (full set + thresholded set) as the
+  default view for 1996 extraction quality decisions.

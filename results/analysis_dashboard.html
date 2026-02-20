@@ -6,35 +6,57 @@
   <title>Catalog Analysis Dashboard</title>
   <style>
     :root {
-      --bg:#081a2b;
-      --bg2:#0f2d47;
-      --card:#112f49;
-      --card2:#123a5a;
-      --ink:#e7f1ff;
-      --muted:#b7cce3;
-      --line:#2a5578;
-      --track:#244763;
+      --bg:#eff1f3;
+      --bg2:#e6e9ed;
+      --card:#f6f7f9;
+      --card2:#eef1f4;
+      --ink:#2c333a;
+      --muted:#727b84;
+      --line:#d7dce1;
+      --track:#dde2e8;
     }
-    body { margin:0; font-family: 'Trebuchet MS', Verdana, sans-serif; background: radial-gradient(circle at 20% 10%, #12385a 0%, var(--bg) 45%, #071525 100%); color:var(--ink); }
-    .wrap { max-width:1100px; margin:0 auto; padding:24px; }
-    h1 { margin:0 0 12px; font-size:28px; }
-    .sub { color:var(--muted); margin-bottom:20px; }
+    body { margin:0; font-family: 'Avenir Next', 'Segoe UI', sans-serif; background: linear-gradient(180deg,var(--bg) 0%, var(--bg2) 100%); color:var(--ink); }
+    .wrap { max-width:1200px; margin:0 auto; padding:30px 26px 36px; }
+    h1 { margin:0 0 8px; font-size:36px; letter-spacing:.1px; color:#13202b; }
+    .sub { color:var(--muted); margin-bottom:14px; font-size:15px; }
+    .kpis { display:grid; grid-template-columns:1fr; gap:10px; margin:0 0 14px; }
+    @media (min-width: 900px) { .kpis { grid-template-columns: 1fr 1fr 1fr; } }
+    .kpi { background:#f4f6f8; border:1px solid var(--line); border-radius:12px; padding:10px 12px; box-shadow:0 4px 12px rgba(31,43,56,.06); }
+    .kpi .k { color:#7a8490; font-size:12px; text-transform:uppercase; letter-spacing:.7px; }
+    .kpi .v { margin-top:4px; font-size:16px; color:#26323d; }
     .grid { display:grid; grid-template-columns: 1fr; gap:14px; }
-    @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
-    .card { background:linear-gradient(180deg, var(--card) 0%, var(--card2) 100%); border:1px solid var(--line); border-radius:12px; padding:14px; box-shadow: 0 10px 30px rgba(0,0,0,.28); }
-    .spotlight { margin-bottom:14px; background:linear-gradient(180deg, #133652 0%, #154264 100%); border-color:#3a6790; }
-    .spotlight h2 { color:#d9e9fb; margin-bottom:8px; font-size:16px; }
-    .spotlight .title { font-size:24px; font-weight:700; letter-spacing:.1px; margin:0 0 3px; line-height:1.25; color:#f0f7ff; }
-    .spotlight .inst { font-size:15px; color:#c9def4; margin:0; }
+    @media (min-width: 1000px) { .grid { grid-template-columns: 1fr 1fr; } }
+    .card { background:linear-gradient(180deg, var(--card) 0%, var(--card2) 100%); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 8px 20px rgba(31,43,56,.06); }
+    .spotlight { margin-bottom:14px; background:linear-gradient(180deg, #f1f3f6 0%, #e8edf2 100%); border-color:#cfd6dd; }
+    .spotlight h2 { color:#6e7782; margin-bottom:8px; font-size:13px; text-transform:uppercase; letter-spacing:.8px; }
+    .spotlight .title { font-size:30px; font-weight:700; margin:0 0 4px; line-height:1.25; color:#2f3740; }
+    .spotlight .inst { font-size:16px; color:#6f7780; margin:0; }
     .supplemental { margin-top:14px; }
-    h2 { margin:0 0 12px; font-size:18px; }
-    .bar-row { display:grid; grid-template-columns: 160px 1fr 66px; gap:8px; align-items:center; margin:6px 0; }
-    .label { font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    h2 { margin:0 0 12px; font-size:22px; color:#1f2a37; }
+    .bar-row { display:grid; grid-template-columns: 170px 1fr 66px; gap:8px; align-items:center; margin:6px 0; }
+    .label { font-size:15px; color:#2e3e49; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .bar-wrap { height:10px; background:var(--track); border-radius:999px; overflow:hidden; }
     .bar { height:100%; border-radius:999px; }
-    .value { text-align:right; font-size:12px; color:#d2e2f3; }
-    .note { font-size:12px; color:var(--muted); margin-top:10px; line-height:1.4; }
-    pre { white-space:pre-wrap; font-size:12px; background:#0b243a; border:1px solid var(--line); padding:10px; border-radius:8px; color:#dbe9f8; }
+    .value { text-align:right; font-size:14px; color:#4f5c66; }
+    .note { font-size:14px; color:var(--muted); margin-top:10px; line-height:1.45; }
+    .keyword-list { display:flex; flex-wrap:wrap; gap:8px; padding-left:0; list-style:none; margin:0 0 10px; }
+    .keyword-list li { margin:0; color:#4b5b68; border:1px solid #cfd6de; background:#edf1f5; border-radius:999px; padding:6px 12px; font-size:13px; font-weight:600; }
+    .trace { margin-top:10px; border-top:1px dashed var(--line); padding-top:10px; }
+    .trace-row { display:grid; grid-template-columns: 150px 1fr; gap:8px; margin:6px 0; }
+    .trace-k { color:#2e4250; font-size:13px; font-weight:600; }
+    .trace-v { color:#4f6070; font-size:13px; }
+    .summary-box { margin-top:10px; }
+    .summary-links a { color:#4d6d8f; text-decoration:none; margin-right:10px; font-size:13px; }
+    .summary-links a:hover { text-decoration:underline; }
+    .summary-map { margin-top:10px; border-top:1px dashed var(--line); padding-top:10px; }
+    .sblock { background:#f3f6f9; border:1px solid #d5dde5; border-radius:10px; padding:10px; margin:8px 0; }
+    .sblock h3 { margin:0 0 6px; font-size:15px; color:#4a5561; }
+    .sblock ul { margin:0; padding-left:18px; }
+    .sblock li { margin:4px 0; color:#3f4f5d; font-size:14px; }
+    .snote { margin:0; color:#495b68; font-size:14px; }
+    .wide { grid-column: 1 / -1; }
+    .round-sub { margin-top:14px; padding-top:10px; border-top:1px dashed var(--line); }
+    pre { white-space:pre-wrap; font-size:14px; background:#f2f5f8; border:1px solid var(--line); padding:12px; border-radius:8px; color:#3c4b59; line-height:1.5; }
   </style>
 </head>
 <body>
@@ -45,84 +67,89 @@
       <p class='inst'>Instructors: Abel Sanchez and John R. Williams</p>
     </section>
     <h1>Catalog Analysis Dashboard</h1>
-    <div class='sub'>Generated by `extra_dashboard.py` from outputs of 06, 12, 13, 15 and round scorecards.</div>
+    <div class='sub'>Generated by `extra_dashboard.py` from outputs of 06, 10, 12, 13, 14, 15 and round scorecards. Updated: 2026-02-20 21:56 UTC. Static HTML view (no server required).</div>
+    <section class='kpis'>
+      <div class='kpi'><div class='k'>Round Snapshot</div><div class='v'>Round 7 | Total 68 / 80 | Avg 4.25 / 5.00</div></div>
+      <div class='kpi'><div class='k'>MIT 1996</div><div class='v'>MIT 1996 records: 2625 | avg confidence: 0.614</div></div>
+      <div class='kpi'><div class='k'>MIT 2024</div><div class='v'>MIT 2024 records: 1543</div></div>
+    </section>
     <div class='grid'>
       <section class='card'>
         <h2>Top Words in Course Titles (NE)</h2>
-        <div class='bar-row'><span class='label'>cs</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#2a6f8f'></div></div><span class='value'>196</span></div>
-<div class='bar-row'><span class='label'>eece</span><div class='bar-wrap'><div class='bar' style='width:85%;background:#2a6f8f'></div></div><span class='value'>167</span></div>
-<div class='bar-row'><span class='label'>chem</span><div class='bar-wrap'><div class='bar' style='width:79%;background:#2a6f8f'></div></div><span class='value'>155</span></div>
-<div class='bar-row'><span class='label'>design</span><div class='bar-wrap'><div class='bar' style='width:78%;background:#2a6f8f'></div></div><span class='value'>153</span></div>
-<div class='bar-row'><span class='label'>research</span><div class='bar-wrap'><div class='bar' style='width:77%;background:#2a6f8f'></div></div><span class='value'>151</span></div>
-<div class='bar-row'><span class='label'>cive</span><div class='bar-wrap'><div class='bar' style='width:72%;background:#2a6f8f'></div></div><span class='value'>143</span></div>
-<div class='bar-row'><span class='label'>caep</span><div class='bar-wrap'><div class='bar' style='width:66%;background:#2a6f8f'></div></div><span class='value'>130</span></div>
-<div class='bar-row'><span class='label'>edu</span><div class='bar-wrap'><div class='bar' style='width:65%;background:#2a6f8f'></div></div><span class='value'>129</span></div>
-<div class='bar-row'><span class='label'>biol</span><div class='bar-wrap'><div class='bar' style='width:55%;background:#2a6f8f'></div></div><span class='value'>108</span></div>
-<div class='bar-row'><span class='label'>econ</span><div class='bar-wrap'><div class='bar' style='width:54%;background:#2a6f8f'></div></div><span class='value'>106</span></div>
-<div class='bar-row'><span class='label'>engineering</span><div class='bar-wrap'><div class='bar' style='width:54%;background:#2a6f8f'></div></div><span class='value'>106</span></div>
-<div class='bar-row'><span class='label'>systems</span><div class='bar-wrap'><div class='bar' style='width:53%;background:#2a6f8f'></div></div><span class='value'>104</span></div>
-<div class='bar-row'><span class='label'>comm</span><div class='bar-wrap'><div class='bar' style='width:50%;background:#2a6f8f'></div></div><span class='value'>99</span></div>
-<div class='bar-row'><span class='label'>chme</span><div class='bar-wrap'><div class='bar' style='width:50%;background:#2a6f8f'></div></div><span class='value'>98</span></div>
-<div class='bar-row'><span class='label'>communication</span><div class='bar-wrap'><div class='bar' style='width:47%;background:#2a6f8f'></div></div><span class='value'>93</span></div>
-<div class='bar-row'><span class='label'>crim</span><div class='bar-wrap'><div class='bar' style='width:47%;background:#2a6f8f'></div></div><span class='value'>93</span></div>
-<div class='bar-row'><span class='label'>envr</span><div class='bar-wrap'><div class='bar' style='width:47%;background:#2a6f8f'></div></div><span class='value'>93</span></div>
-<div class='bar-row'><span class='label'>data</span><div class='bar-wrap'><div class='bar' style='width:45%;background:#2a6f8f'></div></div><span class='value'>89</span></div>
-<div class='bar-row'><span class='label'>project</span><div class='bar-wrap'><div class='bar' style='width:40%;background:#2a6f8f'></div></div><span class='value'>79</span></div>
-<div class='bar-row'><span class='label'>arch</span><div class='bar-wrap'><div class='bar' style='width:39%;background:#2a6f8f'></div></div><span class='value'>77</span></div>
-<div class='bar-row'><span class='label'>bioe</span><div class='bar-wrap'><div class='bar' style='width:38%;background:#2a6f8f'></div></div><span class='value'>76</span></div>
-<div class='bar-row'><span class='label'>artg</span><div class='bar-wrap'><div class='bar' style='width:38%;background:#2a6f8f'></div></div><span class='value'>75</span></div>
-<div class='bar-row'><span class='label'>eemb</span><div class='bar-wrap'><div class='bar' style='width:37%;background:#2a6f8f'></div></div><span class='value'>74</span></div>
-<div class='bar-row'><span class='label'>advanced</span><div class='bar-wrap'><div class='bar' style='width:36%;background:#2a6f8f'></div></div><span class='value'>72</span></div>
-<div class='bar-row'><span class='label'>experience</span><div class='bar-wrap'><div class='bar' style='width:36%;background:#2a6f8f'></div></div><span class='value'>72</span></div>
+        <div class='bar-row'><span class='label'>cs</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#6b8fbe'></div></div><span class='value'>196</span></div>
+<div class='bar-row'><span class='label'>eece</span><div class='bar-wrap'><div class='bar' style='width:85%;background:#6b8fbe'></div></div><span class='value'>167</span></div>
+<div class='bar-row'><span class='label'>chem</span><div class='bar-wrap'><div class='bar' style='width:79%;background:#6b8fbe'></div></div><span class='value'>155</span></div>
+<div class='bar-row'><span class='label'>design</span><div class='bar-wrap'><div class='bar' style='width:78%;background:#6b8fbe'></div></div><span class='value'>153</span></div>
+<div class='bar-row'><span class='label'>research</span><div class='bar-wrap'><div class='bar' style='width:77%;background:#6b8fbe'></div></div><span class='value'>151</span></div>
+<div class='bar-row'><span class='label'>cive</span><div class='bar-wrap'><div class='bar' style='width:72%;background:#6b8fbe'></div></div><span class='value'>143</span></div>
+<div class='bar-row'><span class='label'>caep</span><div class='bar-wrap'><div class='bar' style='width:66%;background:#6b8fbe'></div></div><span class='value'>130</span></div>
+<div class='bar-row'><span class='label'>edu</span><div class='bar-wrap'><div class='bar' style='width:65%;background:#6b8fbe'></div></div><span class='value'>129</span></div>
+<div class='bar-row'><span class='label'>biol</span><div class='bar-wrap'><div class='bar' style='width:55%;background:#6b8fbe'></div></div><span class='value'>108</span></div>
+<div class='bar-row'><span class='label'>econ</span><div class='bar-wrap'><div class='bar' style='width:54%;background:#6b8fbe'></div></div><span class='value'>106</span></div>
+<div class='bar-row'><span class='label'>engineering</span><div class='bar-wrap'><div class='bar' style='width:54%;background:#6b8fbe'></div></div><span class='value'>106</span></div>
+<div class='bar-row'><span class='label'>systems</span><div class='bar-wrap'><div class='bar' style='width:53%;background:#6b8fbe'></div></div><span class='value'>104</span></div>
+<div class='bar-row'><span class='label'>comm</span><div class='bar-wrap'><div class='bar' style='width:50%;background:#6b8fbe'></div></div><span class='value'>99</span></div>
+<div class='bar-row'><span class='label'>chme</span><div class='bar-wrap'><div class='bar' style='width:50%;background:#6b8fbe'></div></div><span class='value'>98</span></div>
+<div class='bar-row'><span class='label'>communication</span><div class='bar-wrap'><div class='bar' style='width:47%;background:#6b8fbe'></div></div><span class='value'>93</span></div>
+<div class='bar-row'><span class='label'>crim</span><div class='bar-wrap'><div class='bar' style='width:47%;background:#6b8fbe'></div></div><span class='value'>93</span></div>
+<div class='bar-row'><span class='label'>envr</span><div class='bar-wrap'><div class='bar' style='width:47%;background:#6b8fbe'></div></div><span class='value'>93</span></div>
+<div class='bar-row'><span class='label'>data</span><div class='bar-wrap'><div class='bar' style='width:45%;background:#6b8fbe'></div></div><span class='value'>89</span></div>
+<div class='bar-row'><span class='label'>project</span><div class='bar-wrap'><div class='bar' style='width:40%;background:#6b8fbe'></div></div><span class='value'>79</span></div>
+<div class='bar-row'><span class='label'>arch</span><div class='bar-wrap'><div class='bar' style='width:39%;background:#6b8fbe'></div></div><span class='value'>77</span></div>
+<div class='bar-row'><span class='label'>bioe</span><div class='bar-wrap'><div class='bar' style='width:38%;background:#6b8fbe'></div></div><span class='value'>76</span></div>
+<div class='bar-row'><span class='label'>artg</span><div class='bar-wrap'><div class='bar' style='width:38%;background:#6b8fbe'></div></div><span class='value'>75</span></div>
+<div class='bar-row'><span class='label'>eemb</span><div class='bar-wrap'><div class='bar' style='width:37%;background:#6b8fbe'></div></div><span class='value'>74</span></div>
+<div class='bar-row'><span class='label'>advanced</span><div class='bar-wrap'><div class='bar' style='width:36%;background:#6b8fbe'></div></div><span class='value'>72</span></div>
+<div class='bar-row'><span class='label'>experience</span><div class='bar-wrap'><div class='bar' style='width:36%;background:#6b8fbe'></div></div><span class='value'>72</span></div>
       </section>
       <section class='card'>
         <h2>Top Department Growth (MIT 1996→Catalog Snapshot)</h2>
-        <div class='bar-row'><span class='label'>20</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#b85c38'></div></div><span class='value'>85</span></div>
-<div class='bar-row'><span class='label'>7</span><div class='bar-wrap'><div class='bar' style='width:49%;background:#b85c38'></div></div><span class='value'>42</span></div>
-<div class='bar-row'><span class='label'>10</span><div class='bar-wrap'><div class='bar' style='width:8%;background:#b85c38'></div></div><span class='value'>7</span></div>
-<div class='bar-row'><span class='label'>21</span><div class='bar-wrap'><div class='bar' style='width:2%;background:#b85c38'></div></div><span class='value'>1</span></div>
+        <div class='bar-row'><span class='label'>20</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#7eaf73'></div></div><span class='value'>85</span></div>
+<div class='bar-row'><span class='label'>7</span><div class='bar-wrap'><div class='bar' style='width:49%;background:#7eaf73'></div></div><span class='value'>42</span></div>
+<div class='bar-row'><span class='label'>10</span><div class='bar-wrap'><div class='bar' style='width:8%;background:#7eaf73'></div></div><span class='value'>7</span></div>
+<div class='bar-row'><span class='label'>21</span><div class='bar-wrap'><div class='bar' style='width:2%;background:#7eaf73'></div></div><span class='value'>1</span></div>
         <h2 style='margin-top:14px'>Top Department Reduction (MIT 1996→Catalog Snapshot)</h2>
-        <div class='bar-row'><span class='label'>15</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#5b6c7d'></div></div><span class='value'>-167</span></div>
-<div class='bar-row'><span class='label'>6_EECS</span><div class='bar-wrap'><div class='bar' style='width:82%;background:#5b6c7d'></div></div><span class='value'>-138</span></div>
-<div class='bar-row'><span class='label'>4</span><div class='bar-wrap'><div class='bar' style='width:68%;background:#5b6c7d'></div></div><span class='value'>-114</span></div>
-<div class='bar-row'><span class='label'>1</span><div class='bar-wrap'><div class='bar' style='width:55%;background:#5b6c7d'></div></div><span class='value'>-93</span></div>
-<div class='bar-row'><span class='label'>12</span><div class='bar-wrap'><div class='bar' style='width:55%;background:#5b6c7d'></div></div><span class='value'>-92</span></div>
-<div class='bar-row'><span class='label'>13</span><div class='bar-wrap'><div class='bar' style='width:53%;background:#5b6c7d'></div></div><span class='value'>-89</span></div>
-<div class='bar-row'><span class='label'>17</span><div class='bar-wrap'><div class='bar' style='width:49%;background:#5b6c7d'></div></div><span class='value'>-82</span></div>
-<div class='bar-row'><span class='label'>11</span><div class='bar-wrap'><div class='bar' style='width:38%;background:#5b6c7d'></div></div><span class='value'>-64</span></div>
+        <div class='bar-row'><span class='label'>15</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#d96a72'></div></div><span class='value'>-167</span></div>
+<div class='bar-row'><span class='label'>6</span><div class='bar-wrap'><div class='bar' style='width:82%;background:#d96a72'></div></div><span class='value'>-138</span></div>
+<div class='bar-row'><span class='label'>4</span><div class='bar-wrap'><div class='bar' style='width:68%;background:#d96a72'></div></div><span class='value'>-114</span></div>
+<div class='bar-row'><span class='label'>1</span><div class='bar-wrap'><div class='bar' style='width:55%;background:#d96a72'></div></div><span class='value'>-93</span></div>
+<div class='bar-row'><span class='label'>12</span><div class='bar-wrap'><div class='bar' style='width:55%;background:#d96a72'></div></div><span class='value'>-92</span></div>
+<div class='bar-row'><span class='label'>13</span><div class='bar-wrap'><div class='bar' style='width:53%;background:#d96a72'></div></div><span class='value'>-89</span></div>
+<div class='bar-row'><span class='label'>17</span><div class='bar-wrap'><div class='bar' style='width:49%;background:#d96a72'></div></div><span class='value'>-82</span></div>
+<div class='bar-row'><span class='label'>11</span><div class='bar-wrap'><div class='bar' style='width:38%;background:#d96a72'></div></div><span class='value'>-64</span></div>
         <div class='note'>Note: raw deltas may include renumbering/restructuring effects, not only true curriculum growth/reduction.</div>
       </section>
       <section class='card'>
         <h2>Top Rising Title Terms (MIT)</h2>
-        <div class='bar-row'><span class='label'>biology</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#3f7d20'></div></div><span class='value'>51</span></div>
-<div class='bar-row'><span class='label'>new</span><div class='bar-wrap'><div class='bar' style='width:84%;background:#3f7d20'></div></div><span class='value'>43</span></div>
-<div class='bar-row'><span class='label'>systems</span><div class='bar-wrap'><div class='bar' style='width:70%;background:#3f7d20'></div></div><span class='value'>36</span></div>
-<div class='bar-row'><span class='label'>biological</span><div class='bar-wrap'><div class='bar' style='width:66%;background:#3f7d20'></div></div><span class='value'>34</span></div>
-<div class='bar-row'><span class='label'>energy</span><div class='bar-wrap'><div class='bar' style='width:64%;background:#3f7d20'></div></div><span class='value'>33</span></div>
-<div class='bar-row'><span class='label'>science</span><div class='bar-wrap'><div class='bar' style='width:58%;background:#3f7d20'></div></div><span class='value'>30</span></div>
-<div class='bar-row'><span class='label'>data</span><div class='bar-wrap'><div class='bar' style='width:52%;background:#3f7d20'></div></div><span class='value'>27</span></div>
-<div class='bar-row'><span class='label'>design</span><div class='bar-wrap'><div class='bar' style='width:47%;background:#3f7d20'></div></div><span class='value'>24</span></div>
-<div class='bar-row'><span class='label'>learning</span><div class='bar-wrap'><div class='bar' style='width:45%;background:#3f7d20'></div></div><span class='value'>23</span></div>
-<div class='bar-row'><span class='label'>global</span><div class='bar-wrap'><div class='bar' style='width:43%;background:#3f7d20'></div></div><span class='value'>22</span></div>
-<div class='bar-row'><span class='label'>climate</span><div class='bar-wrap'><div class='bar' style='width:41%;background:#3f7d20'></div></div><span class='value'>21</span></div>
-<div class='bar-row'><span class='label'>computational</span><div class='bar-wrap'><div class='bar' style='width:41%;background:#3f7d20'></div></div><span class='value'>21</span></div>
-<div class='bar-row'><span class='label'>independent</span><div class='bar-wrap'><div class='bar' style='width:41%;background:#3f7d20'></div></div><span class='value'>21</span></div>
-<div class='bar-row'><span class='label'>materials</span><div class='bar-wrap'><div class='bar' style='width:41%;background:#3f7d20'></div></div><span class='value'>21</span></div>
+        <div class='bar-row'><span class='label'>biology</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#7eaf73'></div></div><span class='value'>51</span></div>
+<div class='bar-row'><span class='label'>new</span><div class='bar-wrap'><div class='bar' style='width:84%;background:#7eaf73'></div></div><span class='value'>43</span></div>
+<div class='bar-row'><span class='label'>systems</span><div class='bar-wrap'><div class='bar' style='width:70%;background:#7eaf73'></div></div><span class='value'>36</span></div>
+<div class='bar-row'><span class='label'>biological</span><div class='bar-wrap'><div class='bar' style='width:66%;background:#7eaf73'></div></div><span class='value'>34</span></div>
+<div class='bar-row'><span class='label'>energy</span><div class='bar-wrap'><div class='bar' style='width:64%;background:#7eaf73'></div></div><span class='value'>33</span></div>
+<div class='bar-row'><span class='label'>science</span><div class='bar-wrap'><div class='bar' style='width:58%;background:#7eaf73'></div></div><span class='value'>30</span></div>
+<div class='bar-row'><span class='label'>data</span><div class='bar-wrap'><div class='bar' style='width:52%;background:#7eaf73'></div></div><span class='value'>27</span></div>
+<div class='bar-row'><span class='label'>design</span><div class='bar-wrap'><div class='bar' style='width:47%;background:#7eaf73'></div></div><span class='value'>24</span></div>
+<div class='bar-row'><span class='label'>learning</span><div class='bar-wrap'><div class='bar' style='width:45%;background:#7eaf73'></div></div><span class='value'>23</span></div>
+<div class='bar-row'><span class='label'>global</span><div class='bar-wrap'><div class='bar' style='width:43%;background:#7eaf73'></div></div><span class='value'>22</span></div>
+<div class='bar-row'><span class='label'>climate</span><div class='bar-wrap'><div class='bar' style='width:41%;background:#7eaf73'></div></div><span class='value'>21</span></div>
+<div class='bar-row'><span class='label'>computational</span><div class='bar-wrap'><div class='bar' style='width:41%;background:#7eaf73'></div></div><span class='value'>21</span></div>
+<div class='bar-row'><span class='label'>independent</span><div class='bar-wrap'><div class='bar' style='width:41%;background:#7eaf73'></div></div><span class='value'>21</span></div>
+<div class='bar-row'><span class='label'>materials</span><div class='bar-wrap'><div class='bar' style='width:41%;background:#7eaf73'></div></div><span class='value'>21</span></div>
         <h2 style='margin-top:14px'>Top Declining Title Terms (MIT)</h2>
-        <div class='bar-row'><span class='label'>seminar</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#8a4f3d'></div></div><span class='value'>-93</span></div>
-<div class='bar-row'><span class='label'>problems</span><div class='bar-wrap'><div class='bar' style='width:77%;background:#8a4f3d'></div></div><span class='value'>-72</span></div>
-<div class='bar-row'><span class='label'>equivalent</span><div class='bar-wrap'><div class='bar' style='width:67%;background:#8a4f3d'></div></div><span class='value'>-63</span></div>
-<div class='bar-row'><span class='label'>advanced</span><div class='bar-wrap'><div class='bar' style='width:66%;background:#8a4f3d'></div></div><span class='value'>-62</span></div>
-<div class='bar-row'><span class='label'>management</span><div class='bar-wrap'><div class='bar' style='width:55%;background:#8a4f3d'></div></div><span class='value'>-52</span></div>
-<div class='bar-row'><span class='label'>theory</span><div class='bar-wrap'><div class='bar' style='width:46%;background:#8a4f3d'></div></div><span class='value'>-43</span></div>
-<div class='bar-row'><span class='label'>topics</span><div class='bar-wrap'><div class='bar' style='width:43%;background:#8a4f3d'></div></div><span class='value'>-40</span></div>
-<div class='bar-row'><span class='label'>studies</span><div class='bar-wrap'><div class='bar' style='width:39%;background:#8a4f3d'></div></div><span class='value'>-37</span></div>
-<div class='bar-row'><span class='label'>nuclear</span><div class='bar-wrap'><div class='bar' style='width:35%;background:#8a4f3d'></div></div><span class='value'>-33</span></div>
-<div class='bar-row'><span class='label'>technology</span><div class='bar-wrap'><div class='bar' style='width:26%;background:#8a4f3d'></div></div><span class='value'>-25</span></div>
-<div class='bar-row'><span class='label'>transportation</span><div class='bar-wrap'><div class='bar' style='width:26%;background:#8a4f3d'></div></div><span class='value'>-25</span></div>
-<div class='bar-row'><span class='label'>urban</span><div class='bar-wrap'><div class='bar' style='width:24%;background:#8a4f3d'></div></div><span class='value'>-23</span></div>
-<div class='bar-row'><span class='label'>financial</span><div class='bar-wrap'><div class='bar' style='width:23%;background:#8a4f3d'></div></div><span class='value'>-22</span></div>
-<div class='bar-row'><span class='label'>graduate</span><div class='bar-wrap'><div class='bar' style='width:23%;background:#8a4f3d'></div></div><span class='value'>-22</span></div>
+        <div class='bar-row'><span class='label'>seminar</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#d96a72'></div></div><span class='value'>-93</span></div>
+<div class='bar-row'><span class='label'>problems</span><div class='bar-wrap'><div class='bar' style='width:77%;background:#d96a72'></div></div><span class='value'>-72</span></div>
+<div class='bar-row'><span class='label'>equivalent</span><div class='bar-wrap'><div class='bar' style='width:67%;background:#d96a72'></div></div><span class='value'>-63</span></div>
+<div class='bar-row'><span class='label'>advanced</span><div class='bar-wrap'><div class='bar' style='width:66%;background:#d96a72'></div></div><span class='value'>-62</span></div>
+<div class='bar-row'><span class='label'>management</span><div class='bar-wrap'><div class='bar' style='width:55%;background:#d96a72'></div></div><span class='value'>-52</span></div>
+<div class='bar-row'><span class='label'>theory</span><div class='bar-wrap'><div class='bar' style='width:46%;background:#d96a72'></div></div><span class='value'>-43</span></div>
+<div class='bar-row'><span class='label'>topics</span><div class='bar-wrap'><div class='bar' style='width:43%;background:#d96a72'></div></div><span class='value'>-40</span></div>
+<div class='bar-row'><span class='label'>studies</span><div class='bar-wrap'><div class='bar' style='width:39%;background:#d96a72'></div></div><span class='value'>-37</span></div>
+<div class='bar-row'><span class='label'>nuclear</span><div class='bar-wrap'><div class='bar' style='width:35%;background:#d96a72'></div></div><span class='value'>-33</span></div>
+<div class='bar-row'><span class='label'>technology</span><div class='bar-wrap'><div class='bar' style='width:26%;background:#d96a72'></div></div><span class='value'>-25</span></div>
+<div class='bar-row'><span class='label'>transportation</span><div class='bar-wrap'><div class='bar' style='width:26%;background:#d96a72'></div></div><span class='value'>-25</span></div>
+<div class='bar-row'><span class='label'>urban</span><div class='bar-wrap'><div class='bar' style='width:24%;background:#d96a72'></div></div><span class='value'>-23</span></div>
+<div class='bar-row'><span class='label'>financial</span><div class='bar-wrap'><div class='bar' style='width:23%;background:#d96a72'></div></div><span class='value'>-22</span></div>
+<div class='bar-row'><span class='label'>graduate</span><div class='bar-wrap'><div class='bar' style='width:23%;background:#d96a72'></div></div><span class='value'>-22</span></div>
         <div class='note'>Interpretation caution: declining terms can include legacy metadata tokens from older catalog formatting.</div>
       </section>
       <section class='card'>
@@ -140,35 +167,66 @@ Interpretation: 2024 appears more specialized than 1996 (token-distribution base
       </section>
       <section class='card'>
         <h2>MIT 1996 Extraction Confidence</h2>
-        <div class='bar-row'><span class='label'>&lt;0.45</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#3f7d20'></div></div><span class='value'>959</span></div>
-<div class='bar-row'><span class='label'>0.45-0.64</span><div class='bar-wrap'><div class='bar' style='width:33%;background:#3f7d20'></div></div><span class='value'>318</span></div>
-<div class='bar-row'><span class='label'>0.65-0.79</span><div class='bar-wrap'><div class='bar' style='width:40%;background:#3f7d20'></div></div><span class='value'>393</span></div>
-<div class='bar-row'><span class='label'>&gt;=0.80</span><div class='bar-wrap'><div class='bar' style='width:99%;background:#3f7d20'></div></div><span class='value'>955</span></div>
+        <div class='bar-row'><span class='label'>&lt;0.45</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#6b8fbe'></div></div><span class='value'>959</span></div>
+<div class='bar-row'><span class='label'>0.45-0.64</span><div class='bar-wrap'><div class='bar' style='width:33%;background:#6b8fbe'></div></div><span class='value'>318</span></div>
+<div class='bar-row'><span class='label'>0.65-0.79</span><div class='bar-wrap'><div class='bar' style='width:40%;background:#6b8fbe'></div></div><span class='value'>393</span></div>
+<div class='bar-row'><span class='label'>&gt;=0.80</span><div class='bar-wrap'><div class='bar' style='width:99%;background:#6b8fbe'></div></div><span class='value'>955</span></div>
         <h2 style='margin-top:14px'>Top Quality Flags</h2>
-        <div class='bar-row'><span class='label'>mixed_text_source</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#8a4f3d'></div></div><span class='value'>2625</span></div>
-<div class='bar-row'><span class='label'>low_confidence</span><div class='bar-wrap'><div class='bar' style='width:36%;background:#8a4f3d'></div></div><span class='value'>959</span></div>
-<div class='bar-row'><span class='label'>thin_description</span><div class='bar-wrap'><div class='bar' style='width:36%;background:#8a4f3d'></div></div><span class='value'>946</span></div>
-<div class='bar-row'><span class='label'>metadata_in_title</span><div class='bar-wrap'><div class='bar' style='width:3%;background:#8a4f3d'></div></div><span class='value'>86</span></div>
-<div class='bar-row'><span class='label'>short_or_noisy_title</span><div class='bar-wrap'><div class='bar' style='width:2%;background:#8a4f3d'></div></div><span class='value'>14</span></div>
-<div class='bar-row'><span class='label'>metadata_heavy_description</span><div class='bar-wrap'><div class='bar' style='width:2%;background:#8a4f3d'></div></div><span class='value'>1</span></div>
+        <div class='bar-row'><span class='label'>mixed_text_source</span><div class='bar-wrap'><div class='bar' style='width:100%;background:#8c7cb6'></div></div><span class='value'>2625</span></div>
+<div class='bar-row'><span class='label'>low_confidence</span><div class='bar-wrap'><div class='bar' style='width:36%;background:#8c7cb6'></div></div><span class='value'>959</span></div>
+<div class='bar-row'><span class='label'>thin_description</span><div class='bar-wrap'><div class='bar' style='width:36%;background:#8c7cb6'></div></div><span class='value'>946</span></div>
+<div class='bar-row'><span class='label'>metadata_in_title</span><div class='bar-wrap'><div class='bar' style='width:3%;background:#8c7cb6'></div></div><span class='value'>86</span></div>
+<div class='bar-row'><span class='label'>short_or_noisy_title</span><div class='bar-wrap'><div class='bar' style='width:2%;background:#8c7cb6'></div></div><span class='value'>14</span></div>
+<div class='bar-row'><span class='label'>metadata_heavy_description</span><div class='bar-wrap'><div class='bar' style='width:2%;background:#8c7cb6'></div></div><span class='value'>1</span></div>
         <div class='note'>MIT 1996 records: 2625 | avg confidence: 0.614</div>
-      </section>
-      <section class='card'>
-        <h2>Round 5 Grading & Evaluation</h2>
-        <p><b>Total score:</b> 66 / 80<br/><b>Average score:</b> 4.13 / 5.00</p>
-        <p><b>Top improvements achieved</b></p>
-        <ul><li>Added reproducibility snapshot artifact (pipeline_snapshot.json) for grading evidence.</li><li>Upgraded 1996 extraction quality controls with confidence and filtering signals.</li><li>Added crosswalk-aware interpretation in comparative analyses (items 12 and 14).</li></ul>
-        <p><b>Next priorities</b></p>
-        <ul><li>1. Statement alignment (most important)</li><li>2. Result correctness and evidence validity</li><li>3. Visual quality and readability</li><li>1. Activate OCR runtime for 1996 extraction (10_extract_1996.py) - P0</li></ul>
       </section>
     </div>
     <section class='card supplemental'>
-      <h2>Supplemental: Quality Score Trend by Round</h2>
-      <div class='bar-row'><span class='label'>Round 1</span><div class='bar-wrap'><div class='bar' style='width:68%;background:#6a4c93'></div></div><span class='value'>3.44/5</span></div>
+      <div class='summary-box'>
+        <h2 style='margin-top:2px'>Summary & Reflection</h2>
+        <div class='summary-links'>
+          <a href='../16_summary_reflection.txt'>Open Summary (results path)</a>
+          <a href='../../16_summary_reflection.txt'>Open Summary (data/output path)</a>
+        </div>
+        <div class='note'>Summary content is organized here as structured blocks for quick review.</div>
+        <div class='summary-map'>
+          <div class='sblock'><h3>Major Departmental Shifts</h3><ul><li>The largest increase in this extraction was Course 20 (from 1 to 86, +85).</li><li>The largest decrease after crosswalk normalization was 6 (from 206 to 68, -138), with additional major decreases in Courses 15, 4, 1, and 12.</li><li>These deltas likely mix real curriculum change with renumbering and extraction-coverage differences.</li></ul></div>
+          <div class='sblock'><h3>Terminology Changes</h3><ul><li>Rising terms included biology, systems, energy, data, learning, climate, computational, and engineering.</li><li>Metadata-heavy legacy terms were reduced by stronger filtering. Declining terms are now dominated more by legacy catalog descriptors (for example seminar, advanced, theory, topics) than by connector words.</li><li>The lexical trend still indicates stronger emphasis on computational, life-science, and interdisciplinary themes in the modern catalog.</li></ul></div>
+          <div class='sblock'><h3>New/Discontinued Subjects</h3><ul><li>Discontinued since 1996 (raw code-set difference): 1932</li><li>New by 2024 (raw code-set difference): 1128</li><li>A crosswalk-adjusted view is reported alongside raw counts to separate true change from renumbering effects.</li></ul></div>
+          <div class='sblock'><h3>Curriculum Breadth</h3><ul><li>Unique title terms:</li><li>1996: 1535</li><li>2024: 1171</li><li>Entropy:</li><li>1996: 9.0978</li><li>2024: 8.8768</li><li>On this token-distribution metric, 2024 appears slightly more specialized than the 1996 snapshot.</li></ul></div>
+          <div class='sblock'><h3>Data Quality</h3><ul><li>MIT 1996 extracted records: 2625</li><li>Description non-empty coverage: 1806 / 2625 (68.80%)</li><li>Average extraction confidence: 0.614</li><li>Per-record quality flags identify low-confidence rows for downstream filtering and review.</li></ul></div>
+          <div class='sblock'><h3>Limitations</h3><ul><li>OCR runtime is now active (`tesseract` available), and OCR fallback is integrated into extraction. Current records are generated with mixed text sources (PDF text + OCR fallback), with measurable coverage/confidence gains.</li><li>Historical crosswalk quality and legacy catalog formatting still influence several deltas and lexical trends.</li><li>Next round should keep dual reporting (full set + thresholded set) as the default view for 1996 extraction quality decisions.</li></ul></div>
+        </div>
+      </div>
+      <div class='trace'>
+        <h2 style='margin-top:2px'>Panel Sources & Timestamps</h2>
+        <div class='trace-row'><span class='trace-k'>Word Frequency</span><span class='trace-v'>ne_title_freq.csv (2026-02-20 20:16 UTC)</span></div>
+<div class='trace-row'><span class='trace-k'>Offerings Delta</span><span class='trace-v'>12_course_offerings_delta.csv (2026-02-20 21:54 UTC), 12_course_offerings_summary.txt (2026-02-20 21:54 UTC)</span></div>
+<div class='trace-row'><span class='trace-k'>Title Evolution</span><span class='trace-v'>13_title_evolution.csv (2026-02-20 20:18 UTC)</span></div>
+<div class='trace-row'><span class='trace-k'>New/Discontinued</span><span class='trace-v'>14_new_and_old.txt (2026-02-20 20:18 UTC)</span></div>
+<div class='trace-row'><span class='trace-k'>Breadth</span><span class='trace-v'>15_curriculum_breadth.txt (2026-02-20 20:18 UTC)</span></div>
+<div class='trace-row'><span class='trace-k'>Extraction Quality</span><span class='trace-v'>10_mit_1996.json (2026-02-20 20:18 UTC), 10_mit_1996_extraction_report.txt (2026-02-20 20:18 UTC), 10_mit_1996_confidence_comparison.txt (2026-02-20 20:18 UTC)</span></div>
+<div class='trace-row'><span class='trace-k'>Run Snapshot</span><span class='trace-v'>pipeline_snapshot.json (2026-02-20 20:16 UTC)</span></div>
+      </div>
+    </section>
+    <section class='card supplemental'>
+      <h2>Round 7 Grading & Evaluation</h2>
+      <p><b>Total score:</b> 68 / 80<br/><b>Average score:</b> 4.25 / 5.00</p>
+      <p><b>Top improvements achieved</b></p>
+      <ul><li>Accuracy evidence strengthened through confidence-threshold comparison outputs.</li><li>Dashboard readability/traceability improved with clear update labels and source timestamps.</li><li>Governance checks added to prevent visualization policy drift.</li></ul>
+      <p><b>Next priorities</b></p>
+      <ul><li>1. Statement alignment (most important)</li><li>2. Result correctness and evidence validity</li><li>3. Visual quality and readability</li><li>1. Production threshold mode for 1996 extraction (10_extract_1996.py) - P0</li></ul>
+      <div class='round-sub'>
+        <h2>Supplemental: Quality Score Trend by Round</h2>
+        <ul class='keyword-list'><li>Round 7</li><li>Score 68 / 80</li><li>Delta +1 point</li><li>Confidence Report Added</li><li>Policy Drift Check Added</li><li>Source Trace Added</li><li>Round Summary Updated</li><li>OCR Active</li></ul>
+        <div class='bar-row'><span class='label'>Round 1</span><div class='bar-wrap'><div class='bar' style='width:68%;background:#6a4c93'></div></div><span class='value'>3.44/5</span></div>
 <div class='bar-row'><span class='label'>Round 2</span><div class='bar-wrap'><div class='bar' style='width:78%;background:#6a4c93'></div></div><span class='value'>3.94/5 (+0.50)</span></div>
 <div class='bar-row'><span class='label'>Round 3</span><div class='bar-wrap'><div class='bar' style='width:80%;background:#6a4c93'></div></div><span class='value'>4.00/5 (+0.06)</span></div>
 <div class='bar-row'><span class='label'>Round 4</span><div class='bar-wrap'><div class='bar' style='width:80%;background:#6a4c93'></div></div><span class='value'>4.00/5 (+0.00)</span></div>
 <div class='bar-row'><span class='label'>Round 5</span><div class='bar-wrap'><div class='bar' style='width:82%;background:#6a4c93'></div></div><span class='value'>4.13/5 (+0.13)</span></div>
+<div class='bar-row'><span class='label'>Round 6</span><div class='bar-wrap'><div class='bar' style='width:83%;background:#6a4c93'></div></div><span class='value'>4.19/5 (+0.06)</span></div>
+<div class='bar-row'><span class='label'>Round 7</span><div class='bar-wrap'><div class='bar' style='width:85%;background:#6a4c93'></div></div><span class='value'>4.25/5 (+0.06)</span></div>
+      </div>
     </section>
   </div>
 </body>

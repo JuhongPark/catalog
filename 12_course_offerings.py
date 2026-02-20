@@ -20,13 +20,13 @@ from catalog_utils import OUTPUT_DIR, ensure_directories, read_json, write_csv, 
 
 
 DEPT_ALIASES = {
-    "6-1": "6_EECS",
-    "6-2": "6_EECS",
-    "6-3": "6_EECS",
-    "6-4": "6_EECS",
-    "6-7": "6_EECS",
-    "6-9": "6_EECS",
-    "6": "6_EECS",
+    "6-1": "6",
+    "6-2": "6",
+    "6-3": "6",
+    "6-4": "6",
+    "6-7": "6",
+    "6-9": "6",
+    "6": "6",
 }
 
 
@@ -35,7 +35,7 @@ def canonical_dept(row: dict) -> str:
     code = (row.get("course_code") or "").strip().upper()
 
     if re.match(r"^6(?:[-.])", code):
-        return "6_EECS"
+        return "6"
     if dept in DEPT_ALIASES:
         return DEPT_ALIASES[dept]
     return dept or "UNK"
@@ -51,7 +51,7 @@ def counts_by_dept(rows: list[dict]) -> Counter:
 
 
 def reason_for_delta(dept: str, delta: int) -> str:
-    if dept == "6_EECS" and delta < 0:
+    if dept == "6" and delta < 0:
         return "Likely affected by MIT EECS renumbering/split plus extraction coverage differences."
     if delta > 40:
         return "Strong growth likely tied to newer interdisciplinary/program tracks and catalog expansion."
@@ -103,7 +103,7 @@ def main() -> None:
 
     lines.append("")
     lines.append("Interpretation Notes:")
-    lines.append("- Department values are normalized with a historical alias crosswalk (for example, 6 and 6-* -> 6_EECS).")
+    lines.append("- Department values are normalized with a historical alias crosswalk (for example, 6 and 6-* -> 6).")
     lines.append("- Differences mix true curriculum change with catalog formatting/numbering evolution.")
     lines.append("- Extreme deltas should be interpreted with caution unless cross-validated with historical departmental metadata.")
 

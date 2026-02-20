@@ -77,6 +77,15 @@ def collect_snapshot(step_results: list[tuple[str, int]]) -> dict:
     return snapshot
 
 
+def find_policy_drift_files() -> list[str]:
+    allowed_html = {"analysis_dashboard.html", "ne_freq_top30.html"}
+    drifts: list[str] = []
+    for path in sorted(OUTPUT_DIR.glob("*.html")):
+        if path.name not in allowed_html:
+            drifts.append(path.name)
+    return drifts
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run catalog pipeline scripts sequentially.")
     parser.add_argument("--from", dest="from_step", default="01_pull.py", help="Start from this script file")
@@ -101,6 +110,12 @@ def main() -> None:
             raise SystemExit(f"Pipeline failed at {step}. See {log_file}")
 
     snapshot = collect_snapshot(step_results)
+    policy_drifts = find_policy_drift_files()
+    if policy_drifts:
+        print("WARNING: visualization policy drift detected (non-required standalone HTML outputs found):")
+        for name in policy_drifts:
+            print(f"- {name}")
+    snapshot["visualization_policy_drifts"] = policy_drifts
     snapshot_path = OUTPUT_DIR / "pipeline_snapshot.json"
     snapshot_path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Wrote snapshot: {snapshot_path}")

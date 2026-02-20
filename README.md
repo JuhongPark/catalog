@@ -12,6 +12,7 @@ Problem set objective: Gain hands-on experience in data collection, storage, pro
 
 - Project plan: `references/process/project_plan.md`
 - Persona definitions: `references/process/personas.md`
+- Statement result checklist: `references/process/statement_result_checklist.md`
 - Imported statement reference: `references/google-docs/1kxmwf7e-cLBEEC92QaNUIOeIYWupwPOSnFPnGZrKHfI/document.md`
 
 ## External Source Links

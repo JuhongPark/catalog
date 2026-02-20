@@ -13,6 +13,7 @@ import csv
 import json
 import re
 from collections import Counter
+from datetime import datetime, timezone
 from html import escape
 
 from catalog_utils import BASE_DIR, OUTPUT_DIR, ensure_directories, write_text
@@ -136,6 +137,191 @@ def read_confidence_diagnostics() -> tuple[list[tuple[str, int]], list[tuple[str
     return (ordered_bins, top_flags, note)
 
 
+def file_stamp(name: str) -> str:
+    path = OUTPUT_DIR / name
+    if not path.exists():
+        return f"{name} (missing)"
+    ts = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    return f"{name} ({ts})"
+
+
+def read_round_change_keywords() -> list[str]:
+    # Round keywords must reflect latest round results documents first.
+    keywords: list[str] = []
+
+    score_files = sorted(PROCESS_DIR.glob("grader_scorecard_round*.md"))
+    if score_files:
+        latest = score_files[-1]
+        text = latest.read_text(encoding="utf-8", errors="replace")
+        m_round = re.search(r"round(\d+)\.md$", latest.name, flags=re.IGNORECASE)
+        if m_round:
+            keywords.append(f"Round {m_round.group(1)}")
+        m_total = re.search(r"Total score:\s*\*\*([0-9]+\s*/\s*[0-9]+)\*\*", text, flags=re.IGNORECASE)
+        if m_total:
+            keywords.append(f"Score {m_total.group(1)}")
+        m_delta = re.search(r"Round\s+\d+\s*->\s*Round\s+\d+:\s*\*\*([^\*]+)\*\*", text, flags=re.IGNORECASE)
+        if m_delta:
+            keywords.append(f"Delta {m_delta.group(1).strip()}")
+
+        changed_block = re.search(
+            r"##\s*What Changed This Round.*?(?=\n##|\Z)",
+            text,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        def to_keyword(line: str) -> str:
+            low = line.lower()
+            if "confidence tradeoff artifact" in low:
+                return "Confidence Report Added"
+            if "policy drift" in low or "visualization-policy drift" in low:
+                return "Policy Drift Check Added"
+            if "source timestamps" in low:
+                return "Source Trace Added"
+            if "round-change keywords" in low:
+                return "Round Keywords Added"
+            if "summary" in low and "reflection" in low:
+                return "Round Summary Updated"
+            line = re.sub(r"`[^`]+`", "", line)
+            line = re.sub(r"[A-Za-z0-9_./-]+\.(txt|json|md|html|csv)", "", line, flags=re.IGNORECASE)
+            line = re.sub(r"\s+", " ", line).strip(" .:-")
+            words = line.split()
+            return " ".join(words[:4]) if words else ""
+
+        if changed_block:
+            for line in changed_block.group(0).splitlines():
+                line = line.strip()
+                if line.startswith("-"):
+                    clean = clean_markdown_text(line[1:].strip())
+                    if clean:
+                        short = to_keyword(clean)
+                        if short:
+                            keywords.append(short)
+
+    if len(keywords) < 8:
+        report_path = OUTPUT_DIR / "10_mit_1996_extraction_report.txt"
+        if report_path.exists():
+            text = report_path.read_text(encoding="utf-8", errors="replace")
+            if "ocr_runtime_available: True" in text:
+                keywords.append("OCR Active")
+            m = re.search(r"records:\s*([0-9]+)", text)
+            if m:
+                keywords.append(f"MIT1996 {m.group(1)} rows")
+
+    # Deduplicate while preserving order.
+    deduped: list[str] = []
+    seen = set()
+    for item in keywords:
+        if item in seen:
+            continue
+        seen.add(item)
+        deduped.append(item)
+    return deduped[:8]
+
+
+def render_source_trace() -> str:
+    traces = [
+        ("Word Frequency", [file_stamp(f"{SOURCE}_title_freq.csv")]),
+        ("Offerings Delta", [file_stamp("12_course_offerings_delta.csv"), file_stamp("12_course_offerings_summary.txt")]),
+        ("Title Evolution", [file_stamp("13_title_evolution.csv")]),
+        ("New/Discontinued", [file_stamp("14_new_and_old.txt")]),
+        ("Breadth", [file_stamp("15_curriculum_breadth.txt")]),
+        ("Extraction Quality", [file_stamp("10_mit_1996.json"), file_stamp("10_mit_1996_extraction_report.txt"), file_stamp("10_mit_1996_confidence_comparison.txt")]),
+        ("Run Snapshot", [file_stamp("pipeline_snapshot.json")]),
+    ]
+    rows = []
+    for label, files in traces:
+        joined = ", ".join(files)
+        rows.append(f"<div class='trace-row'><span class='trace-k'>{escape(label)}</span><span class='trace-v'>{escape(joined)}</span></div>")
+    return "\n".join(rows)
+
+
+def split_summary_sections(summary_text: str) -> dict[str, str]:
+    sections = {
+        "major": "",
+        "terminology": "",
+        "new_old": "",
+        "breadth": "",
+        "quality": "",
+        "limitations": "",
+    }
+    if not summary_text.strip():
+        return sections
+
+    blocks: dict[str, list[str]] = {}
+    current = "intro"
+    blocks[current] = []
+    for line in summary_text.splitlines():
+        m = re.match(r"^\s*([1-5])\.\s+", line)
+        if m:
+            current = m.group(1)
+            blocks[current] = [line]
+        else:
+            blocks.setdefault(current, []).append(line)
+
+    sections["major"] = "\n".join(blocks.get("1", [])).strip()
+    sections["terminology"] = "\n".join(blocks.get("2", [])).strip()
+    sections["new_old"] = "\n".join(blocks.get("3", [])).strip()
+    sections["breadth"] = "\n".join(blocks.get("4", [])).strip()
+    quality_block = "\n".join(blocks.get("5", [])).strip()
+    # Keep section 5 focused on metrics; move trailing note/limitations separately.
+    q_lower = quality_block.lower()
+    q_idx = q_lower.find("data quality note")
+    if q_idx >= 0:
+        sections["quality"] = quality_block[:q_idx].strip()
+    else:
+        sections["quality"] = quality_block
+
+    lower = summary_text.lower()
+    idx = lower.find("data quality note")
+    if idx >= 0:
+        limit_text = summary_text[idx:]
+        # Evidence source list is metadata; keep it out of summary-mapping blocks.
+        ev_idx = limit_text.lower().find("evidence sources used for this summary")
+        if ev_idx >= 0:
+            before = limit_text[:ev_idx].strip()
+            after = limit_text[ev_idx:]
+            # Keep recommendation part if present after evidence list.
+            rec_idx = after.lower().find("limitations and next-step recommendation")
+            if rec_idx >= 0:
+                sections["limitations"] = (before + "\n\n" + after[rec_idx:]).strip()
+            else:
+                sections["limitations"] = before
+        else:
+            sections["limitations"] = limit_text.strip()
+    return sections
+
+
+def render_summary_points(title: str, text: str) -> str:
+    if not text.strip():
+        return f"<div class='sblock'><h3>{escape(title)}</h3><p class='snote'>No summary text available.</p></div>"
+    lines = [x.rstrip() for x in text.splitlines() if x.strip()]
+    points: list[str] = []
+    current = ""
+    for raw in lines:
+        line = raw.strip()
+        if line.lower() in {
+            "data quality note",
+            "evidence sources used for this summary",
+            "limitations and next-step recommendation",
+        }:
+            continue
+        if re.match(r"^\d+\.\s+", line):
+            continue
+        if line.startswith("-"):
+            if current:
+                points.append(current.strip())
+            current = line[1:].strip()
+            continue
+        if current:
+            current += " " + line
+    if current:
+        points.append(current.strip())
+    if not points:
+        body = "<p class='snote'>" + escape(" ".join(lines[:3])) + "</p>"
+    else:
+        body = "<ul>" + "".join(f"<li>{escape(p)}</li>" for p in points[:8]) + "</ul>"
+    return f"<div class='sblock'><h3>{escape(title)}</h3>{body}</div>"
+
+
 def render_bar_list(rows: list[tuple[str, int]], color: str, use_abs: bool = False) -> str:
     if not rows:
         return "<p>No data</p>"
@@ -176,6 +362,12 @@ def render_score_trend(rows: list[tuple[str, float]]) -> str:
     return "\n".join(out)
 
 
+def normalize_display_label(label: str) -> str:
+    if label == "6_EECS":
+        return "6"
+    return label
+
+
 def build_html(
     freq_rows,
     offering_up_rows,
@@ -192,9 +384,34 @@ def build_html(
     confidence_bins: list[tuple[str, int]],
     confidence_flags: list[tuple[str, int]],
     confidence_note: str,
+    change_keywords: list[str],
+    generated_at: str,
+    summary_sections: dict[str, str],
 ) -> str:
     top_html = "".join(f"<li>{escape(item)}</li>" for item in top_improvements) or "<li>N/A</li>"
     pri_html = "".join(f"<li>{escape(item)}</li>" for item in reviewer_priorities[:4]) or "<li>N/A</li>"
+    change_html = "".join(f"<li>{escape(item)}</li>" for item in change_keywords) or "<li>N/A</li>"
+    source_trace_html = render_source_trace()
+    major_txt = escape(summary_sections.get("major", "")).strip()
+    term_txt = escape(summary_sections.get("terminology", "")).strip()
+    new_old_txt = escape(summary_sections.get("new_old", "")).strip()
+    breadth_txt = escape(summary_sections.get("breadth", "")).strip()
+    quality_txt = escape(summary_sections.get("quality", "")).strip()
+    limit_txt = escape(summary_sections.get("limitations", "")).strip()
+    kpi_1996 = confidence_note
+    kpi_2024 = "MIT 2024 records: N/A"
+    p2024 = OUTPUT_DIR / "11_mit_2024.json"
+    if p2024.exists():
+        try:
+            kpi_2024 = f"MIT 2024 records: {len(json.loads(p2024.read_text(encoding='utf-8')))}"
+        except Exception:
+            pass
+    summary_major = render_summary_points("Major Departmental Shifts", summary_sections.get("major", ""))
+    summary_term = render_summary_points("Terminology Changes", summary_sections.get("terminology", ""))
+    summary_new_old = render_summary_points("New/Discontinued Subjects", summary_sections.get("new_old", ""))
+    summary_breadth = render_summary_points("Curriculum Breadth", summary_sections.get("breadth", ""))
+    summary_quality = render_summary_points("Data Quality", summary_sections.get("quality", ""))
+    summary_limit = render_summary_points("Limitations", summary_sections.get("limitations", ""))
     return f"""<!doctype html>
 <html lang='en'>
 <head>
@@ -203,35 +420,57 @@ def build_html(
   <title>Catalog Analysis Dashboard</title>
   <style>
     :root {{
-      --bg:#081a2b;
-      --bg2:#0f2d47;
-      --card:#112f49;
-      --card2:#123a5a;
-      --ink:#e7f1ff;
-      --muted:#b7cce3;
-      --line:#2a5578;
-      --track:#244763;
+      --bg:#eff1f3;
+      --bg2:#e6e9ed;
+      --card:#f6f7f9;
+      --card2:#eef1f4;
+      --ink:#2c333a;
+      --muted:#727b84;
+      --line:#d7dce1;
+      --track:#dde2e8;
     }}
-    body {{ margin:0; font-family: 'Trebuchet MS', Verdana, sans-serif; background: radial-gradient(circle at 20% 10%, #12385a 0%, var(--bg) 45%, #071525 100%); color:var(--ink); }}
-    .wrap {{ max-width:1100px; margin:0 auto; padding:24px; }}
-    h1 {{ margin:0 0 12px; font-size:28px; }}
-    .sub {{ color:var(--muted); margin-bottom:20px; }}
+    body {{ margin:0; font-family: 'Avenir Next', 'Segoe UI', sans-serif; background: linear-gradient(180deg,var(--bg) 0%, var(--bg2) 100%); color:var(--ink); }}
+    .wrap {{ max-width:1200px; margin:0 auto; padding:30px 26px 36px; }}
+    h1 {{ margin:0 0 8px; font-size:36px; letter-spacing:.1px; color:#13202b; }}
+    .sub {{ color:var(--muted); margin-bottom:14px; font-size:15px; }}
+    .kpis {{ display:grid; grid-template-columns:1fr; gap:10px; margin:0 0 14px; }}
+    @media (min-width: 900px) {{ .kpis {{ grid-template-columns: 1fr 1fr 1fr; }} }}
+    .kpi {{ background:#f4f6f8; border:1px solid var(--line); border-radius:12px; padding:10px 12px; box-shadow:0 4px 12px rgba(31,43,56,.06); }}
+    .kpi .k {{ color:#7a8490; font-size:12px; text-transform:uppercase; letter-spacing:.7px; }}
+    .kpi .v {{ margin-top:4px; font-size:16px; color:#26323d; }}
     .grid {{ display:grid; grid-template-columns: 1fr; gap:14px; }}
-    @media (min-width: 900px) {{ .grid {{ grid-template-columns: 1fr 1fr; }} }}
-    .card {{ background:linear-gradient(180deg, var(--card) 0%, var(--card2) 100%); border:1px solid var(--line); border-radius:12px; padding:14px; box-shadow: 0 10px 30px rgba(0,0,0,.28); }}
-    .spotlight {{ margin-bottom:14px; background:linear-gradient(180deg, #133652 0%, #154264 100%); border-color:#3a6790; }}
-    .spotlight h2 {{ color:#d9e9fb; margin-bottom:8px; font-size:16px; }}
-    .spotlight .title {{ font-size:24px; font-weight:700; letter-spacing:.1px; margin:0 0 3px; line-height:1.25; color:#f0f7ff; }}
-    .spotlight .inst {{ font-size:15px; color:#c9def4; margin:0; }}
+    @media (min-width: 1000px) {{ .grid {{ grid-template-columns: 1fr 1fr; }} }}
+    .card {{ background:linear-gradient(180deg, var(--card) 0%, var(--card2) 100%); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 8px 20px rgba(31,43,56,.06); }}
+    .spotlight {{ margin-bottom:14px; background:linear-gradient(180deg, #f1f3f6 0%, #e8edf2 100%); border-color:#cfd6dd; }}
+    .spotlight h2 {{ color:#6e7782; margin-bottom:8px; font-size:13px; text-transform:uppercase; letter-spacing:.8px; }}
+    .spotlight .title {{ font-size:30px; font-weight:700; margin:0 0 4px; line-height:1.25; color:#2f3740; }}
+    .spotlight .inst {{ font-size:16px; color:#6f7780; margin:0; }}
     .supplemental {{ margin-top:14px; }}
-    h2 {{ margin:0 0 12px; font-size:18px; }}
-    .bar-row {{ display:grid; grid-template-columns: 160px 1fr 66px; gap:8px; align-items:center; margin:6px 0; }}
-    .label {{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+    h2 {{ margin:0 0 12px; font-size:22px; color:#1f2a37; }}
+    .bar-row {{ display:grid; grid-template-columns: 170px 1fr 66px; gap:8px; align-items:center; margin:6px 0; }}
+    .label {{ font-size:15px; color:#2e3e49; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
     .bar-wrap {{ height:10px; background:var(--track); border-radius:999px; overflow:hidden; }}
     .bar {{ height:100%; border-radius:999px; }}
-    .value {{ text-align:right; font-size:12px; color:#d2e2f3; }}
-    .note {{ font-size:12px; color:var(--muted); margin-top:10px; line-height:1.4; }}
-    pre {{ white-space:pre-wrap; font-size:12px; background:#0b243a; border:1px solid var(--line); padding:10px; border-radius:8px; color:#dbe9f8; }}
+    .value {{ text-align:right; font-size:14px; color:#4f5c66; }}
+    .note {{ font-size:14px; color:var(--muted); margin-top:10px; line-height:1.45; }}
+    .keyword-list {{ display:flex; flex-wrap:wrap; gap:8px; padding-left:0; list-style:none; margin:0 0 10px; }}
+    .keyword-list li {{ margin:0; color:#4b5b68; border:1px solid #cfd6de; background:#edf1f5; border-radius:999px; padding:6px 12px; font-size:13px; font-weight:600; }}
+    .trace {{ margin-top:10px; border-top:1px dashed var(--line); padding-top:10px; }}
+    .trace-row {{ display:grid; grid-template-columns: 150px 1fr; gap:8px; margin:6px 0; }}
+    .trace-k {{ color:#2e4250; font-size:13px; font-weight:600; }}
+    .trace-v {{ color:#4f6070; font-size:13px; }}
+    .summary-box {{ margin-top:10px; }}
+    .summary-links a {{ color:#4d6d8f; text-decoration:none; margin-right:10px; font-size:13px; }}
+    .summary-links a:hover {{ text-decoration:underline; }}
+    .summary-map {{ margin-top:10px; border-top:1px dashed var(--line); padding-top:10px; }}
+    .sblock {{ background:#f3f6f9; border:1px solid #d5dde5; border-radius:10px; padding:10px; margin:8px 0; }}
+    .sblock h3 {{ margin:0 0 6px; font-size:15px; color:#4a5561; }}
+    .sblock ul {{ margin:0; padding-left:18px; }}
+    .sblock li {{ margin:4px 0; color:#3f4f5d; font-size:14px; }}
+    .snote {{ margin:0; color:#495b68; font-size:14px; }}
+    .wide {{ grid-column: 1 / -1; }}
+    .round-sub {{ margin-top:14px; padding-top:10px; border-top:1px dashed var(--line); }}
+    pre {{ white-space:pre-wrap; font-size:14px; background:#f2f5f8; border:1px solid var(--line); padding:12px; border-radius:8px; color:#3c4b59; line-height:1.5; }}
   </style>
 </head>
 <body>
@@ -242,24 +481,29 @@ def build_html(
       <p class='inst'>{escape(SPOTLIGHT_INSTRUCTORS)}</p>
     </section>
     <h1>Catalog Analysis Dashboard</h1>
-    <div class='sub'>Generated by `extra_dashboard.py` from outputs of 06, 12, 13, 15 and round scorecards.</div>
+    <div class='sub'>Generated by `extra_dashboard.py` from outputs of 06, 10, 12, 13, 14, 15 and round scorecards. Updated: {escape(generated_at)}. Static HTML view (no server required).</div>
+    <section class='kpis'>
+      <div class='kpi'><div class='k'>Round Snapshot</div><div class='v'>{escape(score_round_label)} | Total {escape(total_score)} | Avg {escape(avg_score)}</div></div>
+      <div class='kpi'><div class='k'>MIT 1996</div><div class='v'>{escape(kpi_1996)}</div></div>
+      <div class='kpi'><div class='k'>MIT 2024</div><div class='v'>{escape(kpi_2024)}</div></div>
+    </section>
     <div class='grid'>
       <section class='card'>
         <h2>Top Words in Course Titles (NE)</h2>
-        {render_bar_list(freq_rows, '#2a6f8f')}
+        {render_bar_list(freq_rows, '#6b8fbe')}
       </section>
       <section class='card'>
         <h2>Top Department Growth (MIT 1996→Catalog Snapshot)</h2>
-        {render_bar_list(offering_up_rows, '#b85c38')}
+        {render_bar_list(offering_up_rows, '#7eaf73')}
         <h2 style='margin-top:14px'>Top Department Reduction (MIT 1996→Catalog Snapshot)</h2>
-        {render_bar_list(offering_down_rows, '#5b6c7d', use_abs=True)}
+        {render_bar_list(offering_down_rows, '#d96a72', use_abs=True)}
         <div class='note'>Note: raw deltas may include renumbering/restructuring effects, not only true curriculum growth/reduction.</div>
       </section>
       <section class='card'>
         <h2>Top Rising Title Terms (MIT)</h2>
-        {render_bar_list(title_up_rows, '#3f7d20')}
+        {render_bar_list(title_up_rows, '#7eaf73')}
         <h2 style='margin-top:14px'>Top Declining Title Terms (MIT)</h2>
-        {render_bar_list(title_down_rows, '#8a4f3d', use_abs=True)}
+        {render_bar_list(title_down_rows, '#d96a72', use_abs=True)}
         <div class='note'>Interpretation caution: declining terms can include legacy metadata tokens from older catalog formatting.</div>
       </section>
       <section class='card'>
@@ -268,23 +512,46 @@ def build_html(
       </section>
       <section class='card'>
         <h2>MIT 1996 Extraction Confidence</h2>
-        {render_bar_list(confidence_bins, '#3f7d20')}
+        {render_bar_list(confidence_bins, '#6b8fbe')}
         <h2 style='margin-top:14px'>Top Quality Flags</h2>
-        {render_bar_list(confidence_flags, '#8a4f3d')}
+        {render_bar_list(confidence_flags, '#8c7cb6')}
         <div class='note'>{escape(confidence_note)}</div>
-      </section>
-      <section class='card'>
-        <h2>{escape(score_round_label)} Grading & Evaluation</h2>
-        <p><b>Total score:</b> {escape(total_score)}<br/><b>Average score:</b> {escape(avg_score)}</p>
-        <p><b>Top improvements achieved</b></p>
-        <ul>{top_html}</ul>
-        <p><b>Next priorities</b></p>
-        <ul>{pri_html}</ul>
       </section>
     </div>
     <section class='card supplemental'>
-      <h2>Supplemental: Quality Score Trend by Round</h2>
-      {render_score_trend(score_rows)}
+      <div class='summary-box'>
+        <h2 style='margin-top:2px'>Summary & Reflection</h2>
+        <div class='summary-links'>
+          <a href='../16_summary_reflection.txt'>Open Summary (results path)</a>
+          <a href='../../16_summary_reflection.txt'>Open Summary (data/output path)</a>
+        </div>
+        <div class='note'>Summary content is organized here as structured blocks for quick review.</div>
+        <div class='summary-map'>
+          {summary_major}
+          {summary_term}
+          {summary_new_old}
+          {summary_breadth}
+          {summary_quality}
+          {summary_limit}
+        </div>
+      </div>
+      <div class='trace'>
+        <h2 style='margin-top:2px'>Panel Sources & Timestamps</h2>
+        {source_trace_html}
+      </div>
+    </section>
+    <section class='card supplemental'>
+      <h2>{escape(score_round_label)} Grading & Evaluation</h2>
+      <p><b>Total score:</b> {escape(total_score)}<br/><b>Average score:</b> {escape(avg_score)}</p>
+      <p><b>Top improvements achieved</b></p>
+      <ul>{top_html}</ul>
+      <p><b>Next priorities</b></p>
+      <ul>{pri_html}</ul>
+      <div class='round-sub'>
+        <h2>Supplemental: Quality Score Trend by Round</h2>
+        <ul class='keyword-list'>{change_html}</ul>
+        {render_score_trend(score_rows)}
+      </div>
     </section>
   </div>
 </body>
@@ -296,8 +563,8 @@ def main() -> None:
     ensure_directories()
     freq_rows = read_word_freq(OUTPUT_DIR / f"{SOURCE}_title_freq.csv", top_n=25)
     deltas = read_delta_rows(OUTPUT_DIR / "12_course_offerings_delta.csv", "dept")
-    offering_up_rows = [x for x in deltas if x[1] > 0][:8]
-    offering_down_rows = sorted([x for x in deltas if x[1] < 0], key=lambda x: x[1])[:8]
+    offering_up_rows = [(normalize_display_label(k), v) for k, v in [x for x in deltas if x[1] > 0][:8]]
+    offering_down_rows = [(normalize_display_label(k), v) for k, v in sorted([x for x in deltas if x[1] < 0], key=lambda x: x[1])[:8]]
     title_deltas = read_delta_rows(OUTPUT_DIR / "13_title_evolution.csv", "word")
     title_up_rows = sorted([x for x in title_deltas if x[1] > 0], key=lambda x: x[1], reverse=True)[:14]
     title_down_rows = sorted([x for x in title_deltas if x[1] < 0], key=lambda x: x[1])[:14]
@@ -305,6 +572,11 @@ def main() -> None:
     total_score, avg_score, top_improvements, score_round_label = read_scorecard_summary()
     reviewer_priorities = read_reviewer_priorities()
     confidence_bins, confidence_flags, confidence_note = read_confidence_diagnostics()
+    change_keywords = read_round_change_keywords()
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    summary_path = BASE_DIR / "16_summary_reflection.txt"
+    summary_reflection_text = summary_path.read_text(encoding="utf-8", errors="replace") if summary_path.exists() else ""
+    summary_sections = split_summary_sections(summary_reflection_text)
     breadth_path = OUTPUT_DIR / "15_curriculum_breadth.txt"
     breadth_summary = breadth_path.read_text(encoding="utf-8") if breadth_path.exists() else "No breadth summary yet."
 
@@ -324,6 +596,9 @@ def main() -> None:
         confidence_bins,
         confidence_flags,
         confidence_note,
+        change_keywords,
+        generated_at,
+        summary_sections,
     )
 
     runtime_file = OUTPUT_DIR / "analysis_dashboard.html"

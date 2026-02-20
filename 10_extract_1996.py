@@ -353,6 +353,35 @@ def generate_report(rows: list[dict], pdf_count: int, ocr_enabled: bool, min_con
     )
 
 
+def generate_confidence_comparison_report(rows: list[dict], default_threshold: float = 0.45) -> str:
+    total = len(rows)
+    if total == 0:
+        return (
+            "MIT 1996 Confidence Comparison\n"
+            "==============================\n"
+            "records_full: 0\n"
+            f"records_thresholded(>={default_threshold:.2f}): 0\n"
+        )
+
+    thresholded = [r for r in rows if float(r.get("confidence", 0.0)) >= default_threshold]
+    full_desc = sum(1 for r in rows if str(r.get("description", "")).strip())
+    thr_desc = sum(1 for r in thresholded if str(r.get("description", "")).strip())
+    full_avg_conf = sum(float(r.get("confidence", 0.0)) for r in rows) / total
+    thr_avg_conf = sum(float(r.get("confidence", 0.0)) for r in thresholded) / max(len(thresholded), 1)
+
+    return (
+        "MIT 1996 Confidence Comparison\n"
+        "==============================\n"
+        "note: default comparison threshold is fixed at 0.45 for grading consistency.\n"
+        f"records_full: {total}\n"
+        f"records_thresholded(>=0.45): {len(thresholded)}\n"
+        f"description_coverage_full: {full_desc}/{total} ({(full_desc / total) * 100:.2f}%)\n"
+        f"description_coverage_thresholded: {thr_desc}/{max(len(thresholded), 1)} ({(thr_desc / max(len(thresholded), 1)) * 100:.2f}%)\n"
+        f"avg_confidence_full: {full_avg_conf:.3f}\n"
+        f"avg_confidence_thresholded: {thr_avg_conf:.3f}\n"
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Extract MIT 1996 course records")
     parser.add_argument("--index-url", default=INDEX_URL)
@@ -436,10 +465,14 @@ def main() -> None:
     )
     report_path = OUTPUT_DIR / "10_mit_1996_extraction_report.txt"
     write_text(report_path, report)
+    comparison_report_path = OUTPUT_DIR / "10_mit_1996_confidence_comparison.txt"
+    comparison_report = generate_confidence_comparison_report(sorted(best.values(), key=lambda x: (x["course_code"], x["title"].lower())))
+    write_text(comparison_report_path, comparison_report)
 
     print(f"Index parsed: {len(pdf_links)} PDF links")
     print(f"Extracted {len(filtered)} course-like records -> {out_file}")
     print(f"Wrote extraction report -> {report_path}")
+    print(f"Wrote confidence comparison -> {comparison_report_path}")
 
 
 if __name__ == "__main__":

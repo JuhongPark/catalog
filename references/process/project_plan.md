@@ -2,6 +2,7 @@
 
 ## Goal
 - Improve work quality and requirement coverage through role-based collaboration in a single round.
+- Follow statement output expectations in `references/process/statement_result_checklist.md`.
 
 ## Fixed Round Flow (Single Round)
 1. Planner writes Plan A
@@ -24,6 +25,7 @@
 - Run a pre-submit sanity check against statement requirements, rubric constraints, and required output format.
 - Never create a git commit without explicit user approval in the current conversation.
 - Visualization policy: if a separate visualization file is not explicitly required by the statement for that item, do not create extra standalone visualization outputs; consolidate visualization display in the integrated dashboard.
+- Dashboard summary-mapping policy: for dashboard panels that correspond to summary/reflection findings, place the relevant summary text near that panel (or its linked evaluation section) to preserve context.
 
 ## Deliverable Format
 - Planner: task checklist, priorities, and Definition of Done (DoD)
