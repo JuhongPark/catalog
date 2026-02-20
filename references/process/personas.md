@@ -18,6 +18,10 @@
   - Risks and mitigations
 
 ### Rules
+- Highest-priority checklist for planning:
+  - 1) Statement alignment first
+  - 2) Result correctness/validity second
+  - 3) Visual clarity/quality third
 - Focus on planning, not implementation details.
 - Use file/output-level specificity instead of abstract phrasing.
 - Reject plan items that are not directly tied to statement goals or grading criteria.
@@ -38,6 +42,10 @@
 - One improvement action list
 
 ### Rules
+- Highest-priority checklist for feedback:
+  - 1) Statement alignment first
+  - 2) Result correctness/validity second
+  - 3) Visual clarity/quality third
 - Feedback must be actionable at task level.
 - Do not only criticize; include concrete fix direction and expected outcome.
 - Remove or rewrite plan items that can trigger deductions (unclear evidence, unverifiable outcomes, out-of-scope work).
@@ -73,5 +81,9 @@
 - Overall evaluation focused on missing requirements
 
 ### Rules
+- Highest-priority checklist for scoring:
+  - 1) Statement alignment first
+  - 2) Result correctness/validity second
+  - 3) Visual clarity/quality third
 - Exclude personal style preferences from grading.
 - Provide evidence tied to statement item numbers or exact statement text.

@@ -3,6 +3,15 @@
 Input:
 - `references/process/grader_scorecard_round4.md`
 
+## Attention Priorities (Must Apply in This Round)
+
+Use the following order for all planning, scoring, and feedback decisions:
+1. Statement alignment (most important)
+2. Result correctness and evidence validity
+3. Visual quality and readability
+
+Review notes and proposed actions must explicitly protect these three areas.
+
 ## Remaining Priority Actions
 
 1. OCR/de-columnization upgrade for 1996 extraction (`10_extract_1996.py`) - **P0**
