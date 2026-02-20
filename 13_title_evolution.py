@@ -9,12 +9,42 @@
 
 from __future__ import annotations
 
+import re
+
 from catalog_utils import OUTPUT_DIR, ensure_directories, read_json, word_counts, write_csv, write_text
 
 
+EXTRA_STOPWORDS = {
+    "prereq",
+    "units",
+    "permission",
+    "credit",
+    "instructor",
+    "subject",
+    "same",
+    "acad",
+    "year",
+    "spring",
+    "fall",
+    "h-level",
+    "u-level",
+    "g-level",
+    "special",
+}
+
+
+def normalize_title(raw_title: str) -> str:
+    title = raw_title.strip()
+    title = re.sub(r"^\s*[A-Z]{2,5}\s*\d{1,4}[A-Z]?\s*[:.-]?\s*", "", title)
+    title = re.sub(r"^\s*\d{1,2}\.\d{1,3}[A-Z]?\s*[:.-]?\s*", "", title)
+    title = re.sub(r"\b(?:Prereq|Units|Acad Year|HASS|REST)\b.*$", "", title, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", title).strip()
+
+
 def top_words(rows: list[dict]) -> dict[str, int]:
-    titles = [r.get("title", "") for r in rows if r.get("title")]
-    return dict(word_counts(titles))
+    titles = [normalize_title(r.get("title", "")) for r in rows if r.get("title")]
+    titles = [x for x in titles if x]
+    return dict(word_counts(titles, stopwords=EXTRA_STOPWORDS))
 
 
 def main() -> None:

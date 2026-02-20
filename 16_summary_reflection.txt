@@ -1,47 +1,49 @@
 Summary and Reflection
 
 This project compared MIT subject data extracted from a 1996 catalog source and
-the current MIT online catalog endpoint. The analysis shows large shifts in
-department-level offerings, title vocabulary, and subject-code inventories.
+the current MIT online catalog endpoint. The analysis shows substantial shifts
+in department-level offerings, title vocabulary, and subject-code inventories.
 
 1. Major departmental shifts
 - The largest increase in this extraction was Course 20 (from 1 to 86, +85).
-- The largest decrease was Course 6 (from 280 to 4, -276), with other major
-  decreases in Courses 15, 18, 4, 8, and 1.
+- The largest decrease after crosswalk normalization was 6_EECS (from 199 to 4,
+  -195), with additional major decreases in Courses 15, 4, 1, and 12.
 - These deltas likely mix real curriculum change with renumbering and
-  historical catalog structure differences.
+  extraction-coverage differences.
 
 2. Terminology changes in titles
-- Rising terms included biology, biological, science, energy, data, learning,
-  climate, computational, machine, and ethics.
-- Declining terms were dominated by metadata-like tokens (for example prereq,
-  permission, spring, fall), plus broad terms such as seminar and theory.
-- The lexical trend indicates stronger emphasis on computational and
-  interdisciplinary themes in the modern catalog.
+- Rising terms included biology, biological, science, energy, data, systems,
+  climate, learning, and computational.
+- Metadata-heavy legacy terms were reduced by stronger filtering; however,
+  declining terms still include connector words (for example in, of, or) and
+  broad descriptors such as seminar and theory.
+- The lexical trend still indicates stronger emphasis on computational,
+  life-science, and interdisciplinary themes in the modern catalog.
 
 3. New and discontinued subjects
-- Discontinued since 1996 (code-set difference): 1956
-- New by 2024 (code-set difference): 1029
-- The scale of change supports the interpretation that MIT's catalog has seen
-  substantial restructuring over time.
+- Discontinued since 1996 (raw code-set difference): 1926
+- New by 2024 (raw code-set difference): 1034
+- A crosswalk-adjusted view is now reported to separate true change from
+  renumbering effects.
 
 4. Curriculum breadth interpretation
 - Unique title terms:
-  - 1996: 3028
+  - 1996: 1330
   - 2024: 1140
 - Entropy:
-  - 1996: 9.9428
+  - 1996: 8.9383
   - 2024: 8.8623
-- On this token-distribution metric, 2024 appears more specialized than 1996.
+- On this token-distribution metric, 2024 appears slightly more specialized
+  than the 1996 snapshot.
 
-5. Connection to broader trends
-- Growth of terms such as data, learning, computational, and climate aligns
-  with AI/data-intensive work, sustainability priorities, and
-  interdisciplinary engineering.
-- Increased life-science vocabulary aligns with biotechnology and health-tech
-  expansion.
+5. Data quality and extraction confidence
+- MIT 1996 extracted records: 2560
+- Description non-empty coverage: 1739 / 2560 (67.93%)
+- Average extraction confidence: 0.611
+- Per-record quality flags now identify low-confidence rows for downstream
+  filtering and review.
 
 Data quality note
-- 1996 description coverage improved versus early rounds, but OCR-backed
-  cleanup is still not integrated. Some comparisons remain sensitive to
-  extraction noise and formatting artifacts.
+- OCR fallback logic is implemented in `10_extract_1996.py`, but OCR runtime is
+  currently inactive in this environment (`tesseract` unavailable). Additional
+  confidence gains depend on enabling that runtime path.
