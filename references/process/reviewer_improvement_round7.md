@@ -29,7 +29,7 @@ Use the following order for all planning, scoring, and feedback decisions:
 - DoD: evaluator signs off dashboard structure explicitly in scorecard notes; if not passed, round is not complete.
 
 1. Production threshold mode for 1996 extraction (`10_extract_1996.py`) - **P0**
-- Add an explicit dual-output mode: full set + thresholded set files (for example `10_mit_1996_thresholded.json`).
+- Add an explicit dual-output mode: full set + filtered set files (for example `10_mit_1996_filtered.json`).
 - Keep threshold configurable but enforce one default benchmark (0.45) for grading reproducibility.
 - Done when graders can compare both sets directly without rerunning extraction.
 

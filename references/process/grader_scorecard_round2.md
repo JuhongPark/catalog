@@ -4,7 +4,7 @@ Grading basis: quality-first evaluation against statement expectations.
 
 ## 5-Point Quality Scale
 
-- 5: excellent quality (robust, clear, high confidence)
+- 5: excellent quality (robust, clear, high reliability)
 - 4: good quality (solid implementation with minor limitations)
 - 3: acceptable quality (works but notable quality gaps)
 - 2: weak quality (limited depth/robustness)

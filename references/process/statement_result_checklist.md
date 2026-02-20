@@ -43,7 +43,7 @@ Purpose:
 
 10. `10_extract_1996.py`
 - Extract 1996 course records from scanned catalog.
-- Leave extraction-quality evidence (coverage/confidence/report).
+- Leave extraction-quality evidence (coverage/reliability/report).
 
 11. `11_extract_2024.py`
 - Extract current MIT catalog records.

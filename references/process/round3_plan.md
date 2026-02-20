@@ -4,7 +4,7 @@
 
 Focus:
 1. Resolve the largest remaining quality gap: MIT 1996 extraction depth.
-2. Improve confidence/reproducibility by adding extraction quality reporting.
+2. Improve reliability/reproducibility by adding extraction quality reporting.
 3. Re-evaluate complete pipeline quality after fixes.
 
 Tasks:

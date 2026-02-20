@@ -16,8 +16,8 @@ Review notes and proposed actions must explicitly protect these three areas.
 
 1. OCR/de-columnization upgrade for 1996 extraction (`10_extract_1996.py`) - **P0**
 - Add OCR fallback for low-quality PDF text pages.
-- Add de-columnization cleanup and confidence flags per extracted record.
-- Done when sampled precision improves and low-confidence rows can be filtered.
+- Add de-columnization cleanup and reliability flags per extracted record.
+- Done when sampled precision improves and low-reliability rows can be filtered.
 
 2. Historical code crosswalk normalization (`12_course_offerings.py`, `14_new_and_old.py`) - **P1**
 - Add mapping layer for known renumbering/restructuring changes.

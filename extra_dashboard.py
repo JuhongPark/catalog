@@ -12,7 +12,6 @@ from __future__ import annotations
 import csv
 import json
 import re
-from collections import Counter
 from datetime import datetime, timezone
 from html import escape
 
@@ -99,42 +98,24 @@ def read_reviewer_priorities() -> list[str]:
     path = files[-1]
     if not path.exists():
         return []
+    text = path.read_text(encoding="utf-8", errors="replace")
+    block_match = re.search(
+        r"##\s*Remaining Priority Actions\s*(.*?)(?:\n##|\Z)",
+        text,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    block = block_match.group(1) if block_match else text
+
     out: list[str] = []
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+    for line in block.splitlines():
         line = line.strip()
-        if re.match(r"^\d+\.\s", line):
-            out.append(clean_markdown_text(line))
+        m = re.match(r"^(\d+)\.\s+(.*)$", line)
+        if not m:
+            continue
+        item = clean_markdown_text(m.group(2).strip())
+        if item:
+            out.append(item)
     return out
-
-
-def read_confidence_diagnostics() -> tuple[list[tuple[str, int]], list[tuple[str, int]], str]:
-    path = OUTPUT_DIR / "10_mit_1996.json"
-    if not path.exists():
-        return ([], [], "No MIT 1996 extraction file found.")
-    rows = json.loads(path.read_text(encoding="utf-8"))
-    if not rows:
-        return ([], [], "MIT 1996 extraction file is empty.")
-
-    bins = Counter()
-    flags = Counter()
-    for r in rows:
-        conf = float(r.get("confidence", 0.0))
-        if conf < 0.45:
-            bins["<0.45"] += 1
-        elif conf < 0.65:
-            bins["0.45-0.64"] += 1
-        elif conf < 0.80:
-            bins["0.65-0.79"] += 1
-        else:
-            bins[">=0.80"] += 1
-        for flag in r.get("quality_flags", []):
-            flags[flag] += 1
-
-    ordered_bins = [(k, bins.get(k, 0)) for k in ("<0.45", "0.45-0.64", "0.65-0.79", ">=0.80")]
-    top_flags = flags.most_common(8)
-    avg_conf = sum(float(r.get("confidence", 0.0)) for r in rows) / max(len(rows), 1)
-    note = f"MIT 1996 records: {len(rows)} | avg confidence: {avg_conf:.3f}"
-    return (ordered_bins, top_flags, note)
 
 
 def file_stamp(name: str) -> str:
@@ -170,8 +151,6 @@ def read_round_change_keywords() -> list[str]:
         )
         def to_keyword(line: str) -> str:
             low = line.lower()
-            if "confidence tradeoff artifact" in low:
-                return "Confidence Report Added"
             if "policy drift" in low or "visualization-policy drift" in low:
                 return "Policy Drift Check Added"
             if "source timestamps" in low:
@@ -224,7 +203,7 @@ def render_source_trace() -> str:
         ("Title Evolution", [file_stamp("13_title_evolution.csv")]),
         ("New/Discontinued", [file_stamp("14_new_and_old.txt")]),
         ("Breadth", [file_stamp("15_curriculum_breadth.txt")]),
-        ("Extraction Quality", [file_stamp("10_mit_1996.json"), file_stamp("10_mit_1996_extraction_report.txt"), file_stamp("10_mit_1996_confidence_comparison.txt")]),
+        ("Extraction", [file_stamp("10_mit_1996.json"), file_stamp("10_mit_1996_extraction_report.txt")]),
         ("Run Snapshot", [file_stamp("pipeline_snapshot.json")]),
     ]
     rows = []
@@ -336,7 +315,7 @@ def render_bar_list(rows: list[tuple[str, int]], color: str, use_abs: bool = Fal
         if value != 0:
             width = max(width, 2)
         out.append(
-            f"<div class='bar-row'><span class='label'>{escape(label)}</span>"
+            f"<div class='bar-row' data-sort-value='{value}' data-sort-abs='{abs(value)}'><span class='label'>{escape(label)}</span>"
             f"<div class='bar-wrap'><div class='bar' style='width:{width}%;background:{color}'></div></div>"
             f"<span class='value'>{value}</span></div>"
         )
@@ -354,7 +333,7 @@ def render_score_trend(rows: list[tuple[str, float]]) -> str:
         if prev is not None:
             delta = f" ({score - prev:+.2f})"
         out.append(
-            f"<div class='bar-row'><span class='label'>{escape(label)}</span>"
+            f"<div class='bar-row' data-sort-value='{score:.4f}'><span class='label'>{escape(label)}</span>"
             f"<div class='bar-wrap'><div class='bar' style='width:{width}%;background:#6a4c93'></div></div>"
             f"<span class='value'>{score:.2f}/5{delta}</span></div>"
         )
@@ -381,9 +360,6 @@ def build_html(
     top_improvements: list[str],
     reviewer_priorities: list[str],
     score_round_label: str,
-    confidence_bins: list[tuple[str, int]],
-    confidence_flags: list[tuple[str, int]],
-    confidence_note: str,
     change_keywords: list[str],
     generated_at: str,
     summary_sections: dict[str, str],
@@ -392,20 +368,34 @@ def build_html(
     pri_html = "".join(f"<li>{escape(item)}</li>" for item in reviewer_priorities[:4]) or "<li>N/A</li>"
     change_html = "".join(f"<li>{escape(item)}</li>" for item in change_keywords) or "<li>N/A</li>"
     source_trace_html = render_source_trace()
-    major_txt = escape(summary_sections.get("major", "")).strip()
-    term_txt = escape(summary_sections.get("terminology", "")).strip()
-    new_old_txt = escape(summary_sections.get("new_old", "")).strip()
-    breadth_txt = escape(summary_sections.get("breadth", "")).strip()
-    quality_txt = escape(summary_sections.get("quality", "")).strip()
-    limit_txt = escape(summary_sections.get("limitations", "")).strip()
-    kpi_1996 = confidence_note
-    kpi_2024 = "MIT 2024 records: N/A"
+    snapshot_year = generated_at[:4] if len(generated_at) >= 4 else "N/A"
+    kpi_mit = "MIT 1996 records: N/A | MIT 2024 records: N/A"
+    kpi_ne = f"NE {snapshot_year} records: N/A"
+    p1996 = OUTPUT_DIR / "10_mit_1996.json"
     p2024 = OUTPUT_DIR / "11_mit_2024.json"
-    if p2024.exists():
+    mit_1996_count = None
+    mit_2024_count = None
+    if p1996.exists():
         try:
-            kpi_2024 = f"MIT 2024 records: {len(json.loads(p2024.read_text(encoding='utf-8')))}"
+            mit_1996_count = len(json.loads(p1996.read_text(encoding="utf-8")))
         except Exception:
             pass
+    if p2024.exists():
+        try:
+            mit_2024_count = len(json.loads(p2024.read_text(encoding="utf-8")))
+        except Exception:
+            pass
+    pne = OUTPUT_DIR / "ne_catalog.json"
+    if pne.exists():
+        try:
+            kpi_ne = f"NE {snapshot_year} records: {len(json.loads(pne.read_text(encoding='utf-8')))}"
+        except Exception:
+            pass
+    if mit_1996_count is not None or mit_2024_count is not None:
+        kpi_mit = (
+            f"MIT 1996 records: {mit_1996_count if mit_1996_count is not None else 'N/A'} | "
+            f"MIT 2024 records: {mit_2024_count if mit_2024_count is not None else 'N/A'}"
+        )
     summary_major = render_summary_points("Major Departmental Shifts", summary_sections.get("major", ""))
     summary_term = render_summary_points("Terminology Changes", summary_sections.get("terminology", ""))
     summary_new_old = render_summary_points("New/Discontinued Subjects", summary_sections.get("new_old", ""))
@@ -425,7 +415,6 @@ def build_html(
       --card:#f6f7f9;
       --card2:#eef1f4;
       --ink:#2c333a;
-      --muted:#727b84;
       --line:#d7dce1;
       --track:#dde2e8;
     }}
@@ -433,6 +422,16 @@ def build_html(
     .wrap {{ max-width:1200px; margin:0 auto; padding:30px 26px 36px; }}
     h1 {{ margin:0 0 8px; font-size:36px; letter-spacing:.1px; color:#13202b; }}
     .sub {{ color:var(--muted); margin-bottom:14px; font-size:15px; }}
+    .controls {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 14px; }}
+    .chip {{ border:1px solid #cfd6de; background:#edf1f5; color:#40505d; border-radius:999px; padding:6px 10px; font-size:12px; cursor:pointer; }}
+    .chip.active {{ background:#dce7f2; border-color:#a9bfd6; color:#1f3950; }}
+    .btn {{ border:1px solid #c5ced7; background:#f3f6f9; color:#394b5a; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer; }}
+    .sort-btn {{ flex: 0 0 78px; min-width:78px; text-align:center; }}
+    .panel-head {{ display:flex; justify-content:space-between; gap:8px; align-items:center; }}
+    .panel-head h2 {{ margin-bottom:0; }}
+    .panel-actions {{ display:flex; gap:6px; }}
+    .bar-list.collapsed {{ display:none; }}
+    .panel.hidden {{ display:none; }}
     .kpis {{ display:grid; grid-template-columns:1fr; gap:10px; margin:0 0 14px; }}
     @media (min-width: 900px) {{ .kpis {{ grid-template-columns: 1fr 1fr 1fr; }} }}
     .kpi {{ background:#f4f6f8; border:1px solid var(--line); border-radius:12px; padding:10px 12px; box-shadow:0 4px 12px rgba(31,43,56,.06); }}
@@ -441,6 +440,7 @@ def build_html(
     .grid {{ display:grid; grid-template-columns: 1fr; gap:14px; }}
     @media (min-width: 1000px) {{ .grid {{ grid-template-columns: 1fr 1fr; }} }}
     .card {{ background:linear-gradient(180deg, var(--card) 0%, var(--card2) 100%); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 8px 20px rgba(31,43,56,.06); }}
+    .section-divider {{ grid-column: 1 / -1; font-size:13px; font-weight:700; letter-spacing:.6px; color:#435668; text-transform:uppercase; border-top:1px solid #cfd6de; padding-top:8px; }}
     .spotlight {{ margin-bottom:14px; background:linear-gradient(180deg, #f1f3f6 0%, #e8edf2 100%); border-color:#cfd6dd; }}
     .spotlight h2 {{ color:#6e7782; margin-bottom:8px; font-size:13px; text-transform:uppercase; letter-spacing:.8px; }}
     .spotlight .title {{ font-size:30px; font-weight:700; margin:0 0 4px; line-height:1.25; color:#2f3740; }}
@@ -481,44 +481,74 @@ def build_html(
       <p class='inst'>{escape(SPOTLIGHT_INSTRUCTORS)}</p>
     </section>
     <h1>Catalog Analysis Dashboard</h1>
-    <div class='sub'>Generated by `extra_dashboard.py` from outputs of 06, 10, 12, 13, 14, 15 and round scorecards. Updated: {escape(generated_at)}. Static HTML view (no server required).</div>
+    <div class='sub'>Generated by `extra_dashboard.py` from outputs of 06, 10, 12, 13, 14, 15 and round scorecards. Updated: {escape(generated_at)}. Static HTML view (no server required); lightweight client-side interactivity (for example toggles, sorting, filter chips) is allowed when metric traceability is preserved.</div>
+    <div class='controls'>
+      <button class='chip active' data-filter='all'>All</button>
+      <button class='chip' data-filter='analysis'>Analysis</button>
+      <button class='chip' data-filter='summary'>Summary</button>
+      <button class='chip' data-filter='evaluation'>Evaluation</button>
+    </div>
     <section class='kpis'>
       <div class='kpi'><div class='k'>Round Snapshot</div><div class='v'>{escape(score_round_label)} | Total {escape(total_score)} | Avg {escape(avg_score)}</div></div>
-      <div class='kpi'><div class='k'>MIT 1996</div><div class='v'>{escape(kpi_1996)}</div></div>
-      <div class='kpi'><div class='k'>MIT 2024</div><div class='v'>{escape(kpi_2024)}</div></div>
+      <div class='kpi'><div class='k'>NE</div><div class='v'>{escape(kpi_ne)}</div></div>
+      <div class='kpi'><div class='k'>MIT</div><div class='v'>{escape(kpi_mit)}</div></div>
     </section>
     <div class='grid'>
-      <section class='card'>
-        <h2>Top Words in Course Titles (NE)</h2>
-        {render_bar_list(freq_rows, '#6b8fbe')}
+      <div class='section-divider panel' data-group='analysis'>NE Information</div>
+      <section class='card panel' data-group='analysis'>
+        <div class='panel-head'>
+          <h2>Words in Course Titles (NE)</h2>
+          <div class='panel-actions'>
+            <button class='btn sort-btn' data-target='freq-bars'>Sort: Desc</button>
+          </div>
+        </div>
+        <div id='freq-bars' class='bar-list'>{render_bar_list(freq_rows, '#6b8fbe')}</div>
       </section>
-      <section class='card'>
-        <h2>Top Department Growth (MIT 1996→Catalog Snapshot)</h2>
-        {render_bar_list(offering_up_rows, '#7eaf73')}
-        <h2 style='margin-top:14px'>Top Department Reduction (MIT 1996→Catalog Snapshot)</h2>
-        {render_bar_list(offering_down_rows, '#d96a72', use_abs=True)}
+      <div class='section-divider panel' data-group='analysis'>MIT Information</div>
+      <section class='card panel' data-group='analysis'>
+        <div class='panel-head'>
+          <h2>Department Growth (MIT 1996→Catalog Snapshot)</h2>
+          <div class='panel-actions'>
+            <button class='btn sort-btn' data-target='dept-growth-bars'>Sort: Desc</button>
+          </div>
+        </div>
+        <div id='dept-growth-bars' class='bar-list'>{render_bar_list(offering_up_rows, '#7eaf73')}</div>
+      </section>
+      <section class='card panel' data-group='analysis'>
+        <div class='panel-head'>
+          <h2>Department Reduction (MIT 1996→Catalog Snapshot)</h2>
+          <div class='panel-actions'>
+            <button class='btn sort-btn' data-target='dept-reduction-bars' data-sort-mode='abs'>Sort: Desc</button>
+          </div>
+        </div>
+        <div id='dept-reduction-bars' class='bar-list'>{render_bar_list(offering_down_rows, '#d96a72', use_abs=True)}</div>
         <div class='note'>Note: raw deltas may include renumbering/restructuring effects, not only true curriculum growth/reduction.</div>
       </section>
-      <section class='card'>
-        <h2>Top Rising Title Terms (MIT)</h2>
-        {render_bar_list(title_up_rows, '#7eaf73')}
-        <h2 style='margin-top:14px'>Top Declining Title Terms (MIT)</h2>
-        {render_bar_list(title_down_rows, '#d96a72', use_abs=True)}
+      <section class='card panel' data-group='analysis'>
+        <div class='panel-head'>
+          <h2>Rising Title Terms (MIT)</h2>
+          <div class='panel-actions'>
+            <button class='btn sort-btn' data-target='title-rise-bars'>Sort: Desc</button>
+          </div>
+        </div>
+        <div id='title-rise-bars' class='bar-list'>{render_bar_list(title_up_rows, '#7eaf73')}</div>
+      </section>
+      <section class='card panel' data-group='analysis'>
+        <div class='panel-head'>
+          <h2>Declining Title Terms (MIT)</h2>
+          <div class='panel-actions'>
+            <button class='btn sort-btn' data-target='title-down-bars' data-sort-mode='abs'>Sort: Desc</button>
+          </div>
+        </div>
+        <div id='title-down-bars' class='bar-list'>{render_bar_list(title_down_rows, '#d96a72', use_abs=True)}</div>
         <div class='note'>Interpretation caution: declining terms can include legacy metadata tokens from older catalog formatting.</div>
       </section>
-      <section class='card'>
+      <section class='card panel' data-group='analysis'>
         <h2>Curriculum Breadth Summary</h2>
         <pre>{escape(breadth_summary)}</pre>
       </section>
-      <section class='card'>
-        <h2>MIT 1996 Extraction Confidence</h2>
-        {render_bar_list(confidence_bins, '#6b8fbe')}
-        <h2 style='margin-top:14px'>Top Quality Flags</h2>
-        {render_bar_list(confidence_flags, '#8c7cb6')}
-        <div class='note'>{escape(confidence_note)}</div>
-      </section>
     </div>
-    <section class='card supplemental'>
+    <section class='card supplemental panel' data-group='summary'>
       <div class='summary-box'>
         <h2 style='margin-top:2px'>Summary & Reflection</h2>
         <div class='summary-links'>
@@ -540,7 +570,7 @@ def build_html(
         {source_trace_html}
       </div>
     </section>
-    <section class='card supplemental'>
+    <section class='card supplemental panel' data-group='evaluation'>
       <h2>{escape(score_round_label)} Grading & Evaluation</h2>
       <p><b>Total score:</b> {escape(total_score)}<br/><b>Average score:</b> {escape(avg_score)}</p>
       <p><b>Top improvements achieved</b></p>
@@ -548,12 +578,58 @@ def build_html(
       <p><b>Next priorities</b></p>
       <ul>{pri_html}</ul>
       <div class='round-sub'>
-        <h2>Supplemental: Quality Score Trend by Round</h2>
+        <div class='panel-head'>
+          <h2>Supplemental: Quality Score Trend by Round</h2>
+          <div class='panel-actions'>
+            <button class='btn sort-btn' data-target='score-trend-bars'>Sort: Desc</button>
+          </div>
+        </div>
         <ul class='keyword-list'>{change_html}</ul>
-        {render_score_trend(score_rows)}
+        <div id='score-trend-bars' class='bar-list'>{render_score_trend(score_rows)}</div>
       </div>
     </section>
   </div>
+  <script>
+    (function() {{
+      const chips = Array.from(document.querySelectorAll('.chip'));
+      const panels = Array.from(document.querySelectorAll('.panel'));
+
+      chips.forEach((chip) => {{
+        chip.addEventListener('click', () => {{
+          const filter = chip.getAttribute('data-filter');
+          chips.forEach((c) => c.classList.remove('active'));
+          chip.classList.add('active');
+          panels.forEach((panel) => {{
+            if (filter === 'all') {{
+              panel.classList.remove('hidden');
+              return;
+            }}
+            const match = panel.getAttribute('data-group') === filter;
+            panel.classList.toggle('hidden', !match);
+          }});
+        }});
+      }});
+
+      document.querySelectorAll('.sort-btn').forEach((btn) => {{
+        btn.dataset.order = 'desc';
+        btn.addEventListener('click', () => {{
+          const target = document.getElementById(btn.getAttribute('data-target'));
+          if (!target) return;
+          const rows = Array.from(target.querySelectorAll('.bar-row'));
+          const order = btn.dataset.order === 'desc' ? 'asc' : 'desc';
+          const mode = btn.getAttribute('data-sort-mode') || 'value';
+          rows.sort((a, b) => {{
+            const av = Number(mode === 'abs' ? (a.getAttribute('data-sort-abs') || '0') : (a.getAttribute('data-sort-value') || '0')) || 0;
+            const bv = Number(mode === 'abs' ? (b.getAttribute('data-sort-abs') || '0') : (b.getAttribute('data-sort-value') || '0')) || 0;
+            return order === 'asc' ? av - bv : bv - av;
+          }});
+          rows.forEach((row) => target.appendChild(row));
+          btn.dataset.order = order;
+          btn.textContent = `Sort: ${{order === 'asc' ? 'Asc' : 'Desc'}}`;
+        }});
+      }});
+    }})();
+  </script>
 </body>
 </html>
 """
@@ -571,7 +647,6 @@ def main() -> None:
     score_rows = read_round_scores()
     total_score, avg_score, top_improvements, score_round_label = read_scorecard_summary()
     reviewer_priorities = read_reviewer_priorities()
-    confidence_bins, confidence_flags, confidence_note = read_confidence_diagnostics()
     change_keywords = read_round_change_keywords()
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     summary_path = BASE_DIR / "16_summary_reflection.txt"
@@ -593,9 +668,6 @@ def main() -> None:
         top_improvements,
         reviewer_priorities,
         score_round_label,
-        confidence_bins,
-        confidence_flags,
-        confidence_note,
         change_keywords,
         generated_at,
         summary_sections,

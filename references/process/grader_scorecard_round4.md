@@ -4,7 +4,7 @@ Grading basis: statement-first evaluation using current run outputs only.
 
 ## 5-Point Quality Scale
 
-- 5: excellent quality (robust, clear, high confidence)
+- 5: excellent quality (robust, clear, high reliability)
 - 4: good quality (solid implementation with minor limitations)
 - 3: acceptable quality (works but notable quality gaps)
 - 2: weak quality (limited depth/robustness)
@@ -45,4 +45,4 @@ Strengths:
 - Statement-required artifacts are regenerated and consistent.
 
 Remaining highest-impact gap:
-- Item 10 extraction quality for noisy scanned pages (OCR/de-columnization/confidence scoring).
+- Item 10 extraction quality for noisy scanned pages (OCR/de-columnization/reliability scoring).

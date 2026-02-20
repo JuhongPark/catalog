@@ -36,21 +36,20 @@ in department-level offerings, title vocabulary, and subject-code inventories.
 - On this token-distribution metric, 2024 appears slightly more specialized
   than the 1996 snapshot.
 
-5. Data quality and extraction confidence
+5. Data quality and extraction coverage
 - MIT 1996 extracted records: 2625
 - Description non-empty coverage: 1806 / 2625 (68.80%)
-- Average extraction confidence: 0.614
-- Per-record quality flags identify low-confidence rows for downstream
-  filtering and review.
+- OCR fallback was used on hard pages to improve text recovery.
+- Mixed extraction sources (PDF text + OCR) require cautious interpretation
+  for noisy legacy formatting lines.
 
 Data quality note
 - OCR runtime is now active (`tesseract` available), and OCR fallback is
   integrated into extraction. Current records are generated with mixed text
-  sources (PDF text + OCR fallback), with measurable coverage/confidence gains.
+  sources (PDF text + OCR fallback).
 
 Evidence sources used for this summary
 - `data/output/10_mit_1996_extraction_report.txt`
-- `data/output/10_mit_1996_confidence_comparison.txt`
 - `data/output/11_mit_2024.json`
 - `data/output/12_course_offerings_summary.txt`
 - `data/output/13_title_evolution_summary.txt`
@@ -61,5 +60,5 @@ Evidence sources used for this summary
 Limitations and next-step recommendation
 - Historical crosswalk quality and legacy catalog formatting still influence
   several deltas and lexical trends.
-- Next round should keep dual reporting (full set + thresholded set) as the
-  default view for 1996 extraction quality decisions.
+- This round keeps pipeline numeric consistency checks; next round should focus
+  on stronger department crosswalk validation for large negative deltas.

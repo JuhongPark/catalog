@@ -39,6 +39,13 @@ EXTRA_STOPWORDS = {
     "u-level",
     "g-level",
     "special",
+    "level",
+    "catalog",
+    "undergraduate",
+    "graduate",
+    "arranged",
+    "consent",
+    "staff",
 }
 
 
@@ -47,6 +54,14 @@ def normalize_title(raw_title: str) -> str:
     title = re.sub(r"^\s*[A-Z]{2,5}\s*\d{1,4}[A-Z]?\s*[:.-]?\s*", "", title)
     title = re.sub(r"^\s*\d{1,2}\.\d{1,3}[A-Z]?\s*[:.-]?\s*", "", title)
     title = re.sub(r"\b(?:Prereq|Units|Acad Year|HASS|REST)\b.*$", "", title, flags=re.IGNORECASE)
+    title = re.sub(
+        r"\b(?:h[\s-]?level|u[\s-]?level|g[\s-]?level|undergraduate level|graduate level)\b",
+        " ",
+        title,
+        flags=re.IGNORECASE,
+    )
+    title = re.sub(r"\b(?:permission of instructor|consent of instructor|arranged)\b", " ", title, flags=re.IGNORECASE)
+    title = re.sub(r"\b(?:same subject as|meets with|credit cannot also be received for)\b.*$", "", title, flags=re.IGNORECASE)
     return re.sub(r"\s+", " ", title).strip()
 
 

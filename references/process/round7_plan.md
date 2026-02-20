@@ -4,11 +4,11 @@
 
 Focus:
 1. Enforce statement-grounded accuracy checks before publishing any metric.
-2. Apply confidence-comparison evidence for 1996 extraction quality decisions.
+2. Apply reliability-comparison evidence for 1996 extraction quality decisions.
 3. Improve dashboard readability and review traceability while keeping dashboard-only visualization policy.
 
 Tasks:
-1. Add confidence comparison artifact in `10_extract_1996.py` (full set vs >=0.45 threshold).
+1. Add reliability comparison artifact in `10_extract_1996.py` (full set vs >=0.45 threshold).
 2. Add visualization policy drift warning in `09_pipeline.py`.
 3. Improve `extra_dashboard.py` with round-change keywords and panel source timestamps.
 4. Re-run `09`, `10~15`, and dashboard generation.
@@ -42,5 +42,5 @@ DoD:
 
 Execution evidence (this run):
 1. `09_pipeline.py`: all `01~08` succeeded; `pipeline_snapshot.json` updated.
-2. `10_extract_1996.py --force-ocr`: extraction report plus confidence-comparison report generated.
+2. `10_extract_1996.py --force-ocr`: extraction report plus reliability-comparison report generated.
 3. `11~15` regenerated and dashboard rebuilt with change keywords + source timestamps.

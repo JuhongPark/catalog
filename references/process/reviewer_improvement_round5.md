@@ -16,8 +16,8 @@ Review notes and proposed actions must explicitly protect these three areas.
 
 1. Activate OCR runtime for 1996 extraction (`10_extract_1996.py`) - **P0**
 - Install and enable `tesseract` in the execution environment.
-- Re-run extraction with OCR enabled and compare confidence/coverage deltas.
-- Done when low-confidence share decreases with no major precision regression.
+- Re-run extraction with OCR enabled and compare reliability/coverage deltas.
+- Done when low-reliability share decreases with no major precision regression.
 
 2. Improve MIT 2024 Course 6 coverage (`11_extract_2024.py`) - **P1**
 - Expand parser patterns to capture `6-*` style/alternate heading variants.
@@ -27,6 +27,6 @@ Review notes and proposed actions must explicitly protect these three areas.
 - Suppress additional connector tokens (for example, prepositions/articles) while preserving semantic signal.
 - Done when top declining terms are less dominated by grammatical fillers.
 
-4. Add dashboard section for confidence diagnostics (`extra_dashboard.py`) - **P2**
-- Visualize confidence distribution and top quality flags from `10_mit_1996.json`.
+4. Add dashboard section for reliability diagnostics (`extra_dashboard.py`) - **P2**
+- Visualize reliability distribution and top quality indicators from `10_mit_1996.json`.
 - Done when graders can inspect extraction quality risk visually without opening raw JSON.

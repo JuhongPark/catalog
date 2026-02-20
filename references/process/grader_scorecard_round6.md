@@ -4,7 +4,7 @@ Grading basis: statement-first evaluation using current run outputs only.
 
 ## 5-Point Quality Scale
 
-- 5: excellent quality (robust, clear, high confidence)
+- 5: excellent quality (robust, clear, high reliability)
 - 4: good quality (solid implementation with minor limitations)
 - 3: acceptable quality (works but notable quality gaps)
 - 2: weak quality (limited depth/robustness)
@@ -23,8 +23,8 @@ Grading basis: statement-first evaluation using current run outputs only.
 9. Data Pipeline (`09_pipeline.py`): **5/5**
 - Evidence: `01~08` pipeline execution and machine-readable snapshot artifact available (`data/output/pipeline_snapshot.json`).
 10. Extract MIT 1996 (`10_extract_1996.py`): **4/5**
-- Evidence: OCR runtime active (`ocr_runtime_available: True`), 2625 records, description non-empty 68.80%, avg confidence 0.614.
-- Remaining gap: low-confidence rows still sizable (959 records under 0.45 confidence).
+- Evidence: OCR runtime active (`ocr_runtime_available: True`), 2625 records, description non-empty 68.80%, avg reliability 0.614.
+- Remaining gap: low-reliability rows still sizable (959 records under 0.45 reliability).
 11. Extract MIT 2024 (`11_extract_2024.py`): **5/5**
 - Evidence: parser coverage improved to 1543 records with strong Course 6 capture.
 12. Course Offerings Over Time (`12_course_offerings.py`): **4/5**
@@ -49,6 +49,6 @@ Top improvements achieved:
 - Visualization governance clarified: non-required standalone visual files removed; dashboard-centric display policy documented.
 
 Remaining highest-impact gap:
-- Confidence quality in 1996 extraction still has a substantial low-confidence tail; next-round value is in precision filtering and parser refinement rather than broader scope expansion.
+- Confidence quality in 1996 extraction still has a substantial low-reliability tail; next-round value is in precision filtering and parser refinement rather than broader scope expansion.
 - Next-round scoring should enforce two non-negotiables: statement-grounded numeric accuracy first, and materially improved dashboard visual quality second.
 - Next-round deliverables should also include (a) a concise per-round change summary and (b) dashboard-visible short change keywords for quick review.

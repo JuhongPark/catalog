@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -86,6 +87,44 @@ def find_policy_drift_files() -> list[str]:
     return drifts
 
 
+def _extract_int(pattern: str, text: str) -> int | None:
+    m = re.search(pattern, text, flags=re.IGNORECASE)
+    if not m:
+        return None
+    try:
+        return int(m.group(1))
+    except Exception:
+        return None
+
+
+def run_consistency_checks() -> list[str]:
+    issues: list[str] = []
+
+    p_96 = OUTPUT_DIR / "10_mit_1996.json"
+    p_96_report = OUTPUT_DIR / "10_mit_1996_extraction_report.txt"
+    p_24 = OUTPUT_DIR / "11_mit_2024.json"
+    p_12_delta = OUTPUT_DIR / "12_course_offerings_delta.csv"
+    p_12_summary = OUTPUT_DIR / "12_course_offerings_summary.txt"
+
+    if p_96.exists() and p_96_report.exists():
+        rows_96 = read_json(p_96)
+        report_txt = p_96_report.read_text(encoding="utf-8", errors="replace")
+        report_records = _extract_int(r"records:\s*([0-9]+)", report_txt)
+        if report_records is not None and report_records != len(rows_96):
+            issues.append(
+                f"10_mit_1996.json record count mismatch: json={len(rows_96)} vs extraction_report={report_records}"
+            )
+
+    if p_24.exists() and p_12_delta.exists() and p_12_summary.exists():
+        rows_24 = len(read_json(p_24))
+        summary_txt = p_12_summary.read_text(encoding="utf-8", errors="replace")
+        summary_24 = _extract_int(r"2024 subjects:\s*([0-9]+)", summary_txt)
+        if summary_24 is not None and summary_24 != rows_24:
+            issues.append(f"11_mit_2024.json count mismatch: json={rows_24} vs 12_summary={summary_24}")
+
+    return issues
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run catalog pipeline scripts sequentially.")
     parser.add_argument("--from", dest="from_step", default="01_pull.py", help="Start from this script file")
@@ -116,6 +155,17 @@ def main() -> None:
         for name in policy_drifts:
             print(f"- {name}")
     snapshot["visualization_policy_drifts"] = policy_drifts
+    consistency_issues = run_consistency_checks()
+    snapshot["consistency_checks"] = {
+        "status": "pass" if not consistency_issues else "fail",
+        "issues": consistency_issues,
+    }
+    if consistency_issues:
+        print("WARNING: numeric consistency mismatches detected:")
+        for issue in consistency_issues:
+            print(f"- {issue}")
+    else:
+        print("Numeric consistency checks passed.")
     snapshot_path = OUTPUT_DIR / "pipeline_snapshot.json"
     snapshot_path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Wrote snapshot: {snapshot_path}")

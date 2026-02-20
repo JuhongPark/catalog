@@ -4,7 +4,7 @@ Grading basis: statement requirements in `references/google-docs/1kxmwf7e-cLBEEC
 
 ## 5-Point Quality Scale
 
-- 5: excellent quality (robust, clear, high confidence)
+- 5: excellent quality (robust, clear, high reliability)
 - 4: good quality (solid implementation with minor limitations)
 - 3: acceptable quality (works but notable quality gaps)
 - 2: weak quality (limited depth/robustness)
@@ -30,7 +30,7 @@ Grading basis: statement requirements in `references/google-docs/1kxmwf7e-cLBEEC
 
 5. Data Extraction (`05_extract.py`): **4/5**
 - Strength: title extraction is simple and reliable.
-- Limitation: no confidence filtering for noisy/generated titles.
+- Limitation: no reliability filtering for noisy/generated titles.
 
 6. Word Frequency (`06_frequency.py`): **4/5**
 - Strength: reproducible tokenization/counting pipeline.

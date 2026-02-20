@@ -20,9 +20,9 @@ Mandatory execution gate for next round:
 ## Remaining Priority Actions
 
 1. Confidence-driven filtering for 1996 extraction (`10_extract_1996.py`) - **P0**
-- Add default reporting slices by confidence band and an optional production threshold mode (for example, `--min-confidence 0.45`).
-- Compare quality metrics between full-set and thresholded-set outputs.
-- Done when low-confidence impact is quantifiably reduced with transparent tradeoff reporting.
+- Add default reporting slices by reliability band and an optional production threshold mode (for example, `--min-reliability 0.45`).
+- Compare quality metrics between full-set and filtered-set outputs.
+- Done when low-reliability impact is quantifiably reduced with transparent tradeoff reporting.
 
 2. 1996 title precision cleanup for analysis tasks (`10_extract_1996.py`, `13_title_evolution.py`) - **P1**
 - Tighten title sanitization to reduce residual legacy label noise without suppressing true academic terms.

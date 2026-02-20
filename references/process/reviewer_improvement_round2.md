@@ -6,7 +6,7 @@ Input:
 ## Remaining Priority Actions
 
 1. MIT 1996 OCR pipeline (`10_extract_1996.py`) - **P0**
-- Add OCR fallback for hard pages (e.g., image-based text) and confidence-based post-filtering.
+- Add OCR fallback for hard pages (e.g., image-based text) and reliability-based post-filtering.
 - Done when description coverage and parse precision improve measurably.
 
 2. Historical crosswalk for subject-code evolution (`12`, `14`) - **P1**

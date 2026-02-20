@@ -24,6 +24,8 @@ Problem set objective: Gain hands-on experience in data collection, storage, pro
 - Do not delete original statement comments in project script files.
 - Original comments are part of the project description/reference context and must be preserved.
 - Visualization consolidation rule: unless the statement explicitly requires a dedicated visualization artifact/file for a task, visual outputs must be shown only in the integrated dashboard and not emitted as additional standalone visualization files.
+- Next-round execution guardrail: do not perform non-statement or discretionary changes without explicit user confirmation first.
+- Next-round reporting standard: enrich `README.md`, `16_summary_reflection.txt`, and the dashboard with sufficient, concrete content that clearly communicates core insights and technical edge.
 
 ## Feedback For Next Round
 

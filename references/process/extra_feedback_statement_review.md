@@ -13,5 +13,5 @@ Primary Remaining Risk:
 - Round 3 improved description coverage, but OCR-grade cleanup is still not fully integrated.
 
 Priority Recommendation:
-- Add OCR-backed refinement to item 10 to raise final statement compliance confidence.
+- Add OCR-backed refinement to item 10 to raise final statement compliance reliability.
 - Keep this as the highest-priority action before considering the project fully hardened against the statement.

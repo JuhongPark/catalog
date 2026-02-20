@@ -202,49 +202,6 @@ def title_from_segment(segment: str, code: str) -> str:
     return normalize_whitespace(title)
 
 
-def score_quality(title: str, description: str, extraction_mode: str) -> tuple[float, list[str]]:
-    flags: list[str] = []
-    score = 0.20
-
-    title_alpha = sum(1 for c in title if c.isalpha())
-    if len(title) < 8 or title_alpha < 4:
-        flags.append("short_or_noisy_title")
-        score -= 0.12
-    else:
-        score += 0.28
-
-    title_lower = title.lower()
-    if any(tok in title_lower for tok in ("prereq", "units", "acad", "permission", "credit")):
-        flags.append("metadata_in_title")
-        score -= 0.25
-
-    desc_len = len(description)
-    if desc_len >= 180:
-        score += 0.34
-    elif desc_len >= 80:
-        score += 0.24
-    elif desc_len >= 35:
-        score += 0.12
-    else:
-        flags.append("thin_description")
-        score -= 0.10
-
-    if extraction_mode == "ocr":
-        flags.append("ocr_fallback")
-        score -= 0.04
-    elif extraction_mode == "mixed":
-        flags.append("mixed_text_source")
-
-    if looks_like_metadata(description[:180]):
-        flags.append("metadata_heavy_description")
-        score -= 0.12
-
-    score = max(0.0, min(1.0, score))
-    if score < 0.45:
-        flags.append("low_confidence")
-    return (round(score, 3), flags)
-
-
 def extract_courses_from_text(text: str, extraction_mode: str) -> list[dict]:
     lines = preprocess_lines(text)
 
@@ -294,8 +251,6 @@ def extract_courses_from_text(text: str, extraction_mode: str) -> list[dict]:
                 j += 1
 
             description = normalize_whitespace(" ".join(desc_parts))
-            confidence, quality_flags = score_quality(title=title, description=description, extraction_mode=extraction_mode)
-
             entries.append(
                 {
                     "source": "mit",
@@ -305,15 +260,13 @@ def extract_courses_from_text(text: str, extraction_mode: str) -> list[dict]:
                     "title": title,
                     "description": description,
                     "url": "",
-                    "confidence": confidence,
-                    "quality_flags": quality_flags,
                     "extraction_mode": extraction_mode,
                 }
             )
 
         i += 1
 
-    # Deduplicate by (code,title), keep higher-confidence row.
+    # Deduplicate by (code,title), keep richer description row.
     best: dict[tuple[str, str], dict] = {}
     for rec in entries:
         key = (rec["course_code"], rec["title"].lower())
@@ -321,64 +274,25 @@ def extract_courses_from_text(text: str, extraction_mode: str) -> list[dict]:
         if prev is None:
             best[key] = rec
             continue
-        if rec["confidence"] > prev["confidence"]:
-            best[key] = rec
-            continue
-        if rec["confidence"] == prev["confidence"] and len(rec["description"]) > len(prev["description"]):
+        if len(rec["description"]) > len(prev["description"]):
             best[key] = rec
 
     return list(best.values())
 
 
-def generate_report(rows: list[dict], pdf_count: int, ocr_enabled: bool, min_confidence: float) -> str:
+def generate_report(rows: list[dict], pdf_count: int, ocr_enabled: bool) -> str:
     total = len(rows)
     desc_non_empty = sum(1 for r in rows if str(r.get("description", "")).strip())
-    above_conf = sum(1 for r in rows if float(r.get("confidence", 0.0)) >= min_confidence)
-    low_conf = sum(1 for r in rows if float(r.get("confidence", 0.0)) < 0.45)
     desc_pct = (desc_non_empty / total * 100) if total else 0.0
     avg_desc_len = (sum(len(str(r.get("description", ""))) for r in rows) / total) if total else 0.0
-    avg_conf = (sum(float(r.get("confidence", 0.0)) for r in rows) / total) if total else 0.0
     return (
         "MIT 1996 Extraction Report\n"
         "==========================\n"
         f"PDF files processed: {pdf_count}\n"
         f"ocr_runtime_available: {ocr_enabled}\n"
-        f"min_confidence_filter: {min_confidence:.2f}\n"
         f"records: {total}\n"
-        f"records_at_or_above_min_confidence: {above_conf}\n"
-        f"low_confidence_records(<0.45): {low_conf}\n"
         f"description_non_empty: {desc_non_empty} ({desc_pct:.2f}%)\n"
         f"avg_description_length: {avg_desc_len:.1f}\n"
-        f"avg_confidence: {avg_conf:.3f}\n"
-    )
-
-
-def generate_confidence_comparison_report(rows: list[dict], default_threshold: float = 0.45) -> str:
-    total = len(rows)
-    if total == 0:
-        return (
-            "MIT 1996 Confidence Comparison\n"
-            "==============================\n"
-            "records_full: 0\n"
-            f"records_thresholded(>={default_threshold:.2f}): 0\n"
-        )
-
-    thresholded = [r for r in rows if float(r.get("confidence", 0.0)) >= default_threshold]
-    full_desc = sum(1 for r in rows if str(r.get("description", "")).strip())
-    thr_desc = sum(1 for r in thresholded if str(r.get("description", "")).strip())
-    full_avg_conf = sum(float(r.get("confidence", 0.0)) for r in rows) / total
-    thr_avg_conf = sum(float(r.get("confidence", 0.0)) for r in thresholded) / max(len(thresholded), 1)
-
-    return (
-        "MIT 1996 Confidence Comparison\n"
-        "==============================\n"
-        "note: default comparison threshold is fixed at 0.45 for grading consistency.\n"
-        f"records_full: {total}\n"
-        f"records_thresholded(>=0.45): {len(thresholded)}\n"
-        f"description_coverage_full: {full_desc}/{total} ({(full_desc / total) * 100:.2f}%)\n"
-        f"description_coverage_thresholded: {thr_desc}/{max(len(thresholded), 1)} ({(thr_desc / max(len(thresholded), 1)) * 100:.2f}%)\n"
-        f"avg_confidence_full: {full_avg_conf:.3f}\n"
-        f"avg_confidence_thresholded: {thr_avg_conf:.3f}\n"
     )
 
 
@@ -388,7 +302,6 @@ def main() -> None:
     parser.add_argument("--use-local", action="store_true", help="Use already-downloaded local PDFs when available")
     parser.add_argument("--force-ocr", action="store_true", help="Run OCR pass even if pdftotext output is acceptable")
     parser.add_argument("--ocr-pages", type=int, default=2, help="Number of PDF pages to OCR per file when OCR is used")
-    parser.add_argument("--min-confidence", type=float, default=0.0, help="Drop rows below this confidence threshold (0.0~1.0)")
     args = parser.parse_args()
 
     ensure_directories()
@@ -446,33 +359,25 @@ def main() -> None:
     for rec in courses:
         key = (rec["course_code"], rec["title"].lower())
         prev = best.get(key)
-        if prev is None or rec["confidence"] > prev["confidence"]:
-            best[key] = rec
-            continue
-        if rec["confidence"] == prev["confidence"] and len(rec["description"]) > len(prev["description"]):
+        if prev is None or len(rec["description"]) > len(prev["description"]):
             best[key] = rec
 
-    filtered = [r for r in best.values() if float(r.get("confidence", 0.0)) >= max(0.0, min(1.0, args.min_confidence))]
+    rows = sorted(best.values(), key=lambda x: (x["course_code"], x["title"].lower()))
 
     out_file = OUTPUT_DIR / "10_mit_1996.json"
-    write_json(out_file, sorted(filtered, key=lambda x: (x["course_code"], x["title"].lower())))
+    write_json(out_file, rows)
 
     report = generate_report(
-        filtered,
+        rows,
         pdf_count=len([p for p in pdf_paths if p.exists()]),
         ocr_enabled=ocr_runtime_available,
-        min_confidence=max(0.0, min(1.0, args.min_confidence)),
     )
     report_path = OUTPUT_DIR / "10_mit_1996_extraction_report.txt"
     write_text(report_path, report)
-    comparison_report_path = OUTPUT_DIR / "10_mit_1996_confidence_comparison.txt"
-    comparison_report = generate_confidence_comparison_report(sorted(best.values(), key=lambda x: (x["course_code"], x["title"].lower())))
-    write_text(comparison_report_path, comparison_report)
 
     print(f"Index parsed: {len(pdf_links)} PDF links")
-    print(f"Extracted {len(filtered)} course-like records -> {out_file}")
+    print(f"Extracted {len(rows)} course-like records -> {out_file}")
     print(f"Wrote extraction report -> {report_path}")
-    print(f"Wrote confidence comparison -> {comparison_report_path}")
 
 
 if __name__ == "__main__":
