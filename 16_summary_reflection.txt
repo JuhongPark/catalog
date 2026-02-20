@@ -3,17 +3,21 @@ Summary and Reflection
 This project compared MIT subject data extracted from a 1996 catalog source and
 the current MIT online catalog endpoint. The analysis shows substantial shifts
 in department-level offerings, title vocabulary, and subject-code inventories.
+Dashboard artifact: `results/analysis_dashboard.html`
 
 1. Major departmental shifts
 - The largest increase in this extraction was Course 20 (from 1 to 86, +85).
-- The largest decrease after crosswalk normalization was 6 (from 206 to
-  68, -138), with additional major decreases in Courses 15, 4, 1, and 12.
+- On the crosswalk-normalized view, the largest decrease was Course 6
+  (from 206 to 68, -138), with additional major decreases in Courses 15, 4,
+  1, and 12.
 - These deltas likely mix real curriculum change with renumbering and
   extraction-coverage differences.
 - The top reduced-department list now includes per-department reliability
   notes to separate strong vs caution-heavy interpretations.
 - A crosswalk evidence appendix is now included in the offerings summary to
   make department normalization assumptions explicit.
+- Strong point: the report now separates raw deltas from interpretation, which
+  improves traceability when reviewing large changes.
 
 2. Terminology changes in titles
 - Rising terms included biology, systems, energy, data, learning, climate,
@@ -28,12 +32,16 @@ in department-level offerings, title vocabulary, and subject-code inventories.
   downstream filtering.
 - The lexical trend still indicates stronger emphasis on computational,
   life-science, and interdisciplinary themes in the modern catalog.
+- Strong point: lexical outputs are now easier to audit because rising/declining
+  signals and artifact-like terms are explicitly separated.
 
 3. New and discontinued subjects
 - Discontinued since 1996 (raw code-set difference): 1932
 - New by 2024 (raw code-set difference): 1128
 - A crosswalk-adjusted view is reported alongside raw counts to separate true
   change from renumbering effects.
+- Strong point: presenting raw and adjusted views together reduces overclaim
+  risk and keeps comparisons defensible.
 
 4. Curriculum breadth interpretation
 - Unique title terms:
@@ -47,10 +55,13 @@ in department-level offerings, title vocabulary, and subject-code inventories.
 
 5. Data quality and extraction coverage
 - MIT 1996 extracted records: 2625
+- MIT 2024 extracted records: 1543
 - Description non-empty coverage: 1806 / 2625 (68.80%)
 - OCR fallback was used on hard pages to improve text recovery.
 - Mixed extraction sources (PDF text + OCR) require cautious interpretation
   for noisy legacy formatting lines.
+- Strong point: OCR integration improved extraction completeness while keeping
+  the original pipeline consistency checks intact.
 
 Data quality note
 - OCR runtime is active (`tesseract` available), and OCR fallback is integrated

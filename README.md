@@ -2,6 +2,10 @@
 
 Problem set objective: Gain hands-on experience in data collection, storage, processing, and consumption. Gain experience in analytics and visualization by working with a public university course catalog data.
 
+## Result Dashboard Preview
+
+<img src="results/assets/analysis_dashboard_preview.png" alt="Result Dashboard Preview" width="560" />
+
 ## Overview
 
 - This repository follows a single-round collaboration model.
@@ -26,12 +30,6 @@ Problem set objective: Gain hands-on experience in data collection, storage, pro
 - Visualization consolidation rule: unless the statement explicitly requires a dedicated visualization artifact/file for a task, visual outputs must be shown only in the integrated dashboard and not emitted as additional standalone visualization files.
 - Next-round execution guardrail: do not perform non-statement or discretionary changes without explicit user confirmation first.
 - Next-round reporting standard: enrich `README.md`, `16_summary_reflection.txt`, and the dashboard with sufficient, concrete content that clearly communicates core insights and technical edge.
-
-## Feedback For Next Round
-
-- Keep the current baseline approach for this round.
-- In the next round, upgrade `10_extract_1996.py` with OCR-based PDF extraction and stronger parsing logic for higher data quality.
-- Improve result visualization so outputs can be reviewed visually (charts/dashboard-style artifacts, not text-only summaries).
 
 ## Data Source Status (Checked on 2026-02-19)
 
@@ -65,3 +63,36 @@ Problem set objective: Gain hands-on experience in data collection, storage, pro
 - `extra_dashboard.py` is an extra extension file for integrated visual review.
 - It is outside the original statement scope (`01`~`16`).
 - Shareable visualization outputs are consolidated under `results/` at the repository root.
+
+## Final Deliverables
+
+- Main summary: `16_summary_reflection.txt`
+- Integrated dashboard: `results/analysis_dashboard.html`
+- Core analysis outputs:
+- `data/output/10_mit_1996.json`
+- `data/output/10_mit_1996_extraction_report.txt`
+- `data/output/11_mit_2024.json`
+- `data/output/12_course_offerings_delta.csv`
+- `data/output/12_course_offerings_summary.txt`
+- `data/output/13_title_evolution.csv`
+- `data/output/13_title_evolution_summary.txt`
+- `data/output/14_new_and_old.txt`
+- `data/output/15_curriculum_breadth.txt`
+- `data/output/pipeline_snapshot.json`
+
+## How To Run
+
+1. Run the NE pipeline:
+`python 09_pipeline.py`
+
+2. Run MIT comparison and dashboard generation:
+`python 10_extract_1996.py --force-ocr`
+`python 11_extract_2024.py`
+`python 12_course_offerings.py`
+`python 13_title_evolution.py`
+`python 14_new_and_old.py`
+`python 15_curriculum_breadth.py`
+`python extra_dashboard.py`
+
+3. Open dashboard:
+Open `results/analysis_dashboard.html` directly in a browser.
