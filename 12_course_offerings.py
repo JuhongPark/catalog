@@ -88,8 +88,8 @@ def main() -> None:
     out_csv = OUTPUT_DIR / "12_course_offerings_delta.csv"
     write_csv(out_csv, ["dept", "count_1996", "count_2024", "delta"], rows)
 
-    top_up = rows[:10]
-    top_down = sorted(rows, key=lambda x: x[3])[:10]
+    top_up = [r for r in rows if r[3] > 0][:10]
+    top_down = [r for r in sorted(rows, key=lambda x: x[3]) if r[3] < 0][:10]
     lines = [
         "Course Offerings Over Time",
         "==========================",

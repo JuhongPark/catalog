@@ -22,6 +22,7 @@ Problem set objective: Gain hands-on experience in data collection, storage, pro
 
 - Do not delete original statement comments in project script files.
 - Original comments are part of the project description/reference context and must be preserved.
+- Visualization consolidation rule: unless the statement explicitly requires a dedicated visualization artifact/file for a task, visual outputs must be shown only in the integrated dashboard and not emitted as additional standalone visualization files.
 
 ## Feedback For Next Round
 

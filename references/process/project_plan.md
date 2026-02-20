@@ -23,6 +23,7 @@
 - Mark tasks complete only when Definition of Done is objectively met; otherwise mark as partial with explicit remaining gaps.
 - Run a pre-submit sanity check against statement requirements, rubric constraints, and required output format.
 - Never create a git commit without explicit user approval in the current conversation.
+- Visualization policy: if a separate visualization file is not explicitly required by the statement for that item, do not create extra standalone visualization outputs; consolidate visualization display in the integrated dashboard.
 
 ## Deliverable Format
 - Planner: task checklist, priorities, and Definition of Done (DoD)
