@@ -5,3 +5,6 @@ __pycache__/
 # Local runtime outputs
 data/
 logs/
+
+# Local editor settings
+.vscode/
