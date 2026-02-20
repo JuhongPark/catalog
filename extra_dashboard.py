@@ -31,7 +31,7 @@ def read_word_freq(path, top_n: int = 25) -> list[tuple[str, int]]:
     return rows[:top_n]
 
 
-def read_delta_csv(path, key: str, top_n: int = 12) -> list[tuple[str, int]]:
+def read_delta_rows(path, key: str) -> list[tuple[str, int]]:
     rows: list[tuple[str, int]] = []
     if not path.exists():
         return rows
@@ -39,8 +39,13 @@ def read_delta_csv(path, key: str, top_n: int = 12) -> list[tuple[str, int]]:
         reader = csv.DictReader(f)
         for row in reader:
             rows.append((row[key], int(row["delta"])))
-    rows.sort(key=lambda x: x[1], reverse=True)
-    return rows[:top_n]
+    return rows
+
+
+def clean_markdown_text(text: str) -> str:
+    text = re.sub(r"`([^`]+)`", r"\1", text)
+    text = text.replace("**", "")
+    return text.strip()
 
 
 def read_round_scores() -> list[tuple[str, float]]:
@@ -69,6 +74,8 @@ def read_scorecard_summary() -> tuple[str, str, list[str], str]:
     total_match = re.search(r"Total score:\s*\*\*([0-9]+\s*/\s*[0-9]+)\*\*", text, flags=re.IGNORECASE)
     avg_match = re.search(r"Average score:\s*\*\*([0-9]+(?:\.[0-9]+)?\s*/\s*5(?:\.00)?)\*\*", text, flags=re.IGNORECASE)
     top_match = re.search(r"Top improvements achieved:\s*(.*?)(?:\n\n|\Z)", text, flags=re.IGNORECASE | re.DOTALL)
+    if not top_match:
+        top_match = re.search(r"Strengths:\s*(.*?)(?:\n\n|\Z)", text, flags=re.IGNORECASE | re.DOTALL)
     total = total_match.group(1) if total_match else "N/A"
     avg = avg_match.group(1) if avg_match else "N/A"
     tops: list[str] = []
@@ -76,7 +83,7 @@ def read_scorecard_summary() -> tuple[str, str, list[str], str]:
         for line in top_match.group(1).splitlines():
             line = line.strip()
             if line.startswith("-"):
-                tops.append(line[1:].strip())
+                tops.append(clean_markdown_text(line[1:].strip()))
     return (total, avg, tops, round_label)
 
 
@@ -91,17 +98,23 @@ def read_reviewer_priorities() -> list[str]:
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
         line = line.strip()
         if re.match(r"^\d+\.\s", line):
-            out.append(line)
+            out.append(clean_markdown_text(line))
     return out
 
 
-def render_bar_list(rows: list[tuple[str, int]], color: str) -> str:
+def render_bar_list(rows: list[tuple[str, int]], color: str, use_abs: bool = False) -> str:
     if not rows:
         return "<p>No data</p>"
-    max_val = max(v for _, v in rows) or 1
+    if use_abs:
+        max_val = max(abs(v) for _, v in rows) or 1
+    else:
+        max_val = max(v for _, v in rows) or 1
     out = []
     for label, value in rows:
-        width = int((value / max_val) * 100)
+        basis = abs(value) if use_abs else value
+        width = int((basis / max_val) * 100)
+        if value != 0:
+            width = max(width, 2)
         out.append(
             f"<div class='bar-row'><span class='label'>{escape(label)}</span>"
             f"<div class='bar-wrap'><div class='bar' style='width:{width}%;background:{color}'></div></div>"
@@ -131,8 +144,10 @@ def render_score_trend(rows: list[tuple[str, float]]) -> str:
 
 def build_html(
     freq_rows,
-    offering_rows,
-    title_rows,
+    offering_up_rows,
+    offering_down_rows,
+    title_up_rows,
+    title_down_rows,
     breadth_summary,
     score_rows,
     total_score: str,
@@ -165,6 +180,7 @@ def build_html(
     .bar-wrap {{ height:10px; background:#ece4d5; border-radius:999px; overflow:hidden; }}
     .bar {{ height:100%; border-radius:999px; }}
     .value {{ text-align:right; font-size:12px; color:var(--muted); }}
+    .note {{ font-size:12px; color:var(--muted); margin-top:10px; line-height:1.4; }}
     pre {{ white-space:pre-wrap; font-size:12px; background:#f6f2e7; border:1px solid var(--line); padding:10px; border-radius:8px; }}
   </style>
 </head>
@@ -178,12 +194,18 @@ def build_html(
         {render_bar_list(freq_rows, '#2a6f8f')}
       </section>
       <section class='card'>
-        <h2>Top Department Growth (MIT 1996→2024)</h2>
-        {render_bar_list(offering_rows, '#b85c38')}
+        <h2>Top Department Growth (MIT 1996→Catalog Snapshot)</h2>
+        {render_bar_list(offering_up_rows, '#b85c38')}
+        <h2 style='margin-top:14px'>Top Department Reduction (MIT 1996→Catalog Snapshot)</h2>
+        {render_bar_list(offering_down_rows, '#5b6c7d', use_abs=True)}
+        <div class='note'>Note: raw deltas may include renumbering/restructuring effects, not only true curriculum growth/reduction.</div>
       </section>
       <section class='card'>
         <h2>Top Rising Title Terms (MIT)</h2>
-        {render_bar_list(title_rows, '#3f7d20')}
+        {render_bar_list(title_up_rows, '#3f7d20')}
+        <h2 style='margin-top:14px'>Top Declining Title Terms (MIT)</h2>
+        {render_bar_list(title_down_rows, '#8a4f3d', use_abs=True)}
+        <div class='note'>Interpretation caution: declining terms can include legacy metadata tokens from older catalog formatting.</div>
       </section>
       <section class='card'>
         <h2>Curriculum Breadth Summary</h2>
@@ -211,8 +233,12 @@ def build_html(
 def main() -> None:
     ensure_directories()
     freq_rows = read_word_freq(OUTPUT_DIR / f"{SOURCE}_title_freq.csv", top_n=25)
-    offering_rows = [x for x in read_delta_csv(OUTPUT_DIR / "12_course_offerings_delta.csv", "dept", top_n=12) if x[1] > 0]
-    title_rows = [x for x in read_delta_csv(OUTPUT_DIR / "13_title_evolution.csv", "word", top_n=14) if x[1] > 0]
+    deltas = read_delta_rows(OUTPUT_DIR / "12_course_offerings_delta.csv", "dept")
+    offering_up_rows = [x for x in deltas if x[1] > 0][:8]
+    offering_down_rows = sorted([x for x in deltas if x[1] < 0], key=lambda x: x[1])[:8]
+    title_deltas = read_delta_rows(OUTPUT_DIR / "13_title_evolution.csv", "word")
+    title_up_rows = sorted([x for x in title_deltas if x[1] > 0], key=lambda x: x[1], reverse=True)[:14]
+    title_down_rows = sorted([x for x in title_deltas if x[1] < 0], key=lambda x: x[1])[:14]
     score_rows = read_round_scores()
     total_score, avg_score, top_improvements, score_round_label = read_scorecard_summary()
     reviewer_priorities = read_reviewer_priorities()
@@ -221,8 +247,10 @@ def main() -> None:
 
     html = build_html(
         freq_rows,
-        offering_rows,
-        title_rows,
+        offering_up_rows,
+        offering_down_rows,
+        title_up_rows,
+        title_down_rows,
         breadth_summary,
         score_rows,
         total_score,

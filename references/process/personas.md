@@ -57,6 +57,7 @@
 - Do not make arbitrary changes outside the agreed plan scope.
 - Keep implementation reproducible.
 - Do not complete tasks unless the plan's Definition of Done is objectively satisfied; otherwise report partial completion with gaps.
+- Never create a git commit without explicit user approval in the current conversation.
 
 ## Grader
 ### Role

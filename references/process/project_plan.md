@@ -22,6 +22,7 @@
 - Run a grading-risk check before completion: verify evidence, output integrity, and reproducibility to prevent point deductions.
 - Mark tasks complete only when Definition of Done is objectively met; otherwise mark as partial with explicit remaining gaps.
 - Run a pre-submit sanity check against statement requirements, rubric constraints, and required output format.
+- Never create a git commit without explicit user approval in the current conversation.
 
 ## Deliverable Format
 - Planner: task checklist, priorities, and Definition of Done (DoD)
