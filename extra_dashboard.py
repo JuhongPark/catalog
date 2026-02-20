@@ -14,6 +14,7 @@ import json
 import re
 from datetime import datetime, timezone
 from html import escape
+from zoneinfo import ZoneInfo
 
 from catalog_utils import BASE_DIR, OUTPUT_DIR, ensure_directories, write_text
 
@@ -22,6 +23,12 @@ PROCESS_DIR = BASE_DIR / "references" / "process"
 SOURCE = "ne"
 SPOTLIGHT_TITLE = "1.001: Engineering Computation and Data Science"
 SPOTLIGHT_INSTRUCTORS = "Instructors: Abel Sanchez and John R. Williams"
+EASTERN_TZ = ZoneInfo("America/New_York")
+
+
+def round_index_from_name(name: str) -> int:
+    m = re.search(r"round(\d+)\.md$", name, flags=re.IGNORECASE)
+    return int(m.group(1)) if m else -1
 
 
 def read_word_freq(path, top_n: int = 25) -> list[tuple[str, int]]:
@@ -54,7 +61,7 @@ def clean_markdown_text(text: str) -> str:
 
 def read_round_scores() -> list[tuple[str, float]]:
     scores: list[tuple[str, float]] = []
-    files = sorted(PROCESS_DIR.glob("grader_scorecard_round*.md"))
+    files = sorted(PROCESS_DIR.glob("grader_scorecard_round*.md"), key=lambda p: round_index_from_name(p.name))
     for path in files:
         text = path.read_text(encoding="utf-8", errors="replace")
         round_match = re.search(r"round(\d+)\.md$", path.name, flags=re.IGNORECASE)
@@ -66,7 +73,7 @@ def read_round_scores() -> list[tuple[str, float]]:
 
 
 def read_scorecard_summary() -> tuple[str, str, list[str], str]:
-    files = sorted(PROCESS_DIR.glob("grader_scorecard_round*.md"))
+    files = sorted(PROCESS_DIR.glob("grader_scorecard_round*.md"), key=lambda p: round_index_from_name(p.name))
     if not files:
         return ("N/A", "N/A", [], "N/A")
     path = files[-1]
@@ -92,7 +99,7 @@ def read_scorecard_summary() -> tuple[str, str, list[str], str]:
 
 
 def read_reviewer_priorities() -> list[str]:
-    files = sorted(PROCESS_DIR.glob("reviewer_improvement_round*.md"))
+    files = sorted(PROCESS_DIR.glob("reviewer_improvement_round*.md"), key=lambda p: round_index_from_name(p.name))
     if not files:
         return []
     path = files[-1]
@@ -122,7 +129,7 @@ def file_stamp(name: str) -> str:
     path = OUTPUT_DIR / name
     if not path.exists():
         return f"{name} (missing)"
-    ts = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    ts = datetime.fromtimestamp(path.stat().st_mtime, tz=EASTERN_TZ).strftime("%Y-%m-%d %H:%M ET")
     return f"{name} ({ts})"
 
 
@@ -130,7 +137,7 @@ def read_round_change_keywords() -> list[str]:
     # Round keywords must reflect latest round results documents first.
     keywords: list[str] = []
 
-    score_files = sorted(PROCESS_DIR.glob("grader_scorecard_round*.md"))
+    score_files = sorted(PROCESS_DIR.glob("grader_scorecard_round*.md"), key=lambda p: round_index_from_name(p.name))
     if score_files:
         latest = score_files[-1]
         text = latest.read_text(encoding="utf-8", errors="replace")
@@ -366,7 +373,6 @@ def build_html(
 ) -> str:
     top_html = "".join(f"<li>{escape(item)}</li>" for item in top_improvements) or "<li>N/A</li>"
     pri_html = "".join(f"<li>{escape(item)}</li>" for item in reviewer_priorities[:4]) or "<li>N/A</li>"
-    change_html = "".join(f"<li>{escape(item)}</li>" for item in change_keywords) or "<li>N/A</li>"
     source_trace_html = render_source_trace()
     snapshot_year = generated_at[:4] if len(generated_at) >= 4 else "N/A"
     kpi_mit = "MIT 1996 records: N/A | MIT 2024 records: N/A"
@@ -455,8 +461,6 @@ def build_html(
     .note {{ font-size:14px; color:var(--muted); margin-top:10px; line-height:1.45; }}
     .risk-list {{ margin:0; padding-left:18px; }}
     .risk-list li {{ margin:4px 0; color:#3f4f5d; font-size:14px; }}
-    .keyword-list {{ display:flex; flex-wrap:wrap; gap:8px; padding-left:0; list-style:none; margin:0 0 10px; }}
-    .keyword-list li {{ margin:0; color:#4b5b68; border:1px solid #cfd6de; background:#edf1f5; border-radius:999px; padding:6px 12px; font-size:13px; font-weight:600; }}
     .trace {{ margin-top:10px; border-top:1px dashed var(--line); padding-top:10px; }}
     .trace-row {{ display:grid; grid-template-columns: 150px 1fr; gap:8px; margin:6px 0; }}
     .trace-k {{ color:#2e4250; font-size:13px; font-weight:600; }}
@@ -473,6 +477,17 @@ def build_html(
     .wide {{ grid-column: 1 / -1; }}
     .round-sub {{ margin-top:14px; padding-top:10px; border-top:1px dashed var(--line); }}
     pre {{ white-space:pre-wrap; font-size:14px; background:#f2f5f8; border:1px solid var(--line); padding:12px; border-radius:8px; color:#3c4b59; line-height:1.5; }}
+    @media (max-width: 760px) {{
+      .wrap {{ padding:20px 14px 24px; }}
+      .grid {{ gap:10px; }}
+      .card {{ padding:12px; }}
+      h1 {{ font-size:30px; }}
+      h2 {{ font-size:20px; }}
+      .bar-row {{ grid-template-columns: 120px 1fr 52px; gap:6px; margin:5px 0; }}
+      .label {{ font-size:13px; }}
+      .value {{ font-size:12px; }}
+      .trace-row {{ grid-template-columns: 120px 1fr; gap:6px; }}
+    }}
   </style>
 </head>
 <body>
@@ -586,19 +601,19 @@ def build_html(
             <button type='button' class='btn sort-btn' data-target='score-trend-bars' data-order='desc'>Sort: Desc</button>
           </div>
         </div>
-        <ul class='keyword-list'>{change_html}</ul>
         <div id='score-trend-bars' class='bar-list'>{render_score_trend(score_rows)}</div>
       </div>
     </section>
   </div>
   <script>
     (function() {{
-      const chips = Array.from(document.querySelectorAll('.chip'));
-      const panels = Array.from(document.querySelectorAll('.panel'));
-
-      chips.forEach((chip) => {{
-        chip.addEventListener('click', () => {{
+      document.addEventListener('click', (ev) => {{
+        const chip = ev.target.closest('.chip');
+        if (chip) {{
+          ev.preventDefault();
           const filter = chip.getAttribute('data-filter');
+          const chips = Array.from(document.querySelectorAll('.chip'));
+          const panels = Array.from(document.querySelectorAll('.panel'));
           chips.forEach((c) => c.classList.remove('active'));
           chip.classList.add('active');
           panels.forEach((panel) => {{
@@ -609,28 +624,27 @@ def build_html(
             const match = panel.getAttribute('data-group') === filter;
             panel.classList.toggle('hidden', !match);
           }});
-        }});
-      }});
+          return;
+        }}
 
-      document.querySelectorAll('.sort-btn').forEach((btn) => {{
+        const btn = ev.target.closest('.sort-btn');
+        if (!btn) return;
+        ev.preventDefault();
         if (!btn.dataset.order) btn.dataset.order = 'desc';
-        btn.addEventListener('click', (ev) => {{
-          ev.preventDefault();
-          const target = document.getElementById(btn.getAttribute('data-target'));
-          if (!target) return;
-          const rows = Array.from(target.querySelectorAll('.bar-row'));
-          if (rows.length < 2) return;
-          const order = btn.dataset.order === 'desc' ? 'asc' : 'desc';
-          const mode = btn.getAttribute('data-sort-mode') || 'value';
-          rows.sort((a, b) => {{
-            const av = Number(mode === 'abs' ? (a.getAttribute('data-sort-abs') || '0') : (a.getAttribute('data-sort-value') || '0')) || 0;
-            const bv = Number(mode === 'abs' ? (b.getAttribute('data-sort-abs') || '0') : (b.getAttribute('data-sort-value') || '0')) || 0;
-            return order === 'asc' ? av - bv : bv - av;
-          }});
-          rows.forEach((row) => target.appendChild(row));
-          btn.dataset.order = order;
-          btn.textContent = `Sort: ${{order === 'asc' ? 'Asc' : 'Desc'}}`;
+        const target = document.getElementById(btn.getAttribute('data-target'));
+        if (!target) return;
+        const rows = Array.from(target.querySelectorAll('.bar-row'));
+        if (rows.length < 2) return;
+        const order = btn.dataset.order === 'desc' ? 'asc' : 'desc';
+        const mode = btn.getAttribute('data-sort-mode') || 'value';
+        rows.sort((a, b) => {{
+          const av = Number(mode === 'abs' ? (a.getAttribute('data-sort-abs') || '0') : (a.getAttribute('data-sort-value') || '0')) || 0;
+          const bv = Number(mode === 'abs' ? (b.getAttribute('data-sort-abs') || '0') : (b.getAttribute('data-sort-value') || '0')) || 0;
+          return order === 'asc' ? av - bv : bv - av;
         }});
+        rows.forEach((row) => target.appendChild(row));
+        btn.dataset.order = order;
+        btn.textContent = `Sort: ${{order === 'asc' ? 'Asc' : 'Desc'}}`;
       }});
     }})();
   </script>
@@ -652,7 +666,7 @@ def main() -> None:
     total_score, avg_score, top_improvements, score_round_label = read_scorecard_summary()
     reviewer_priorities = read_reviewer_priorities()
     change_keywords = read_round_change_keywords()
-    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    generated_at = datetime.now(EASTERN_TZ).strftime("%Y-%m-%d %H:%M ET")
     summary_path = BASE_DIR / "16_summary_reflection.txt"
     summary_reflection_text = summary_path.read_text(encoding="utf-8", errors="replace") if summary_path.exists() else ""
     summary_sections = split_summary_sections(summary_reflection_text)

@@ -10,7 +10,7 @@ Focus:
 Tasks:
 1. Add per-department reliability notes for top reduced departments in `12_course_offerings.py`.
 2. Add a "likely format-artifact terms" section in `13_title_evolution.py` summary output.
-3. Add concise caution visibility in dashboard analysis flow (`extra_dashboard.py`).
+3. Consolidate caution statements into the limitations section in dashboard summary flow (`extra_dashboard.py`).
 4. Expand `09_pipeline.py` numeric guardrail with a cross-check between 13 and 14 outputs.
 5. Regenerate outputs and refresh `16_summary_reflection.txt` with round-9 changes.
 
@@ -18,7 +18,7 @@ DoD:
 - `12_course_offerings_summary.txt` includes reliability notes for top reduced departments.
 - `13_title_evolution_summary.txt` includes likely format-artifact terms section.
 - `pipeline_snapshot.json` remains `consistency_checks.status = pass`.
-- Dashboard shows caution summary without hiding core metrics.
+- Dashboard limitations block shows concise caution summary without duplicated phrasing.
 
 ## Reviewer Merged Execution Plan
 

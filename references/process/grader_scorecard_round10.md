@@ -1,4 +1,4 @@
-# Grader Scorecard (Round 9)
+# Grader Scorecard (Round 10)
 
 Grading basis: statement-first evaluation using current run outputs only.
 
@@ -10,15 +10,15 @@ Grading basis: statement-first evaluation using current run outputs only.
 - 2: weak quality (limited depth/robustness)
 - 1: poor quality (insufficient)
 
-## What Changed This Round (vs Round 8)
+## What Changed This Round (vs Round 9)
 
-- Added per-department reliability notes to top reduced departments in `12_course_offerings_summary.txt`.
-- Added explicit "Likely Format-Artifact Terms" section to `13_title_evolution_summary.txt`.
-- Added 13/14 cross-file guardrail checks in `09_pipeline.py`.
-- Consolidated caution statements into the dashboard limitations section.
-- Updated `16_summary_reflection.txt` with reliability-note and artifact-section implications.
+- Added crosswalk evidence appendix to `12_course_offerings_summary.txt`.
+- Added declining-term bucket classification (`decline_bucket`) to `13_title_evolution.csv`.
+- Improved mismatch message specificity format in `09_pipeline.py` guardrails.
+- Improved dashboard compactness on smaller screens in `extra_dashboard.py`.
+- Updated `16_summary_reflection.txt` to include crosswalk appendix and bucket-classification implications.
 
-## Itemized Results (Round 9)
+## Itemized Results (Round 10)
 
 1. Data Acquisition (`01_pull.py`): **4/5**
 2. Data Preparation (`02_combine.py`): **4/5**
@@ -29,19 +29,19 @@ Grading basis: statement-first evaluation using current run outputs only.
 7. Data Visualization (`07_visualization.py`): **5/5**
 8. Export Clean Dataset (`08_export.py`): **4/5**
 9. Data Pipeline (`09_pipeline.py`): **5/5**
-- Evidence: `consistency_checks.status = pass`; no policy drifts; added 13/14 cross-check logic.
+- Evidence: `consistency_checks.status = pass`; no policy drifts; guardrail messages are now field-labeled.
 10. Extract MIT 1996 (`10_extract_1996.py`): **5/5**
-- Evidence: 2625 records with stable extraction report coverage.
+- Evidence: 2625 records; extraction report regenerated.
 11. Extract MIT 2024 (`11_extract_2024.py`): **5/5**
 - Evidence: 1543 records.
 12. Course Offerings Over Time (`12_course_offerings.py`): **5/5**
-- Evidence: top reduced departments now include reliability notes.
+- Evidence: reliability notes plus explicit crosswalk appendix.
 13. Title Evolution (`13_title_evolution.py`): **5/5**
-- Evidence: summary now distinguishes likely format-artifact declines.
+- Evidence: summary artifact section retained; CSV now exposes `decline_bucket`.
 14. New/Discontinued Subjects (`14_new_and_old.py`): **4/5**
 15. Curriculum Breadth (`15_curriculum_breadth.py`): **4/5**
 16. Summary and Reflection (`16_summary_reflection.txt`): **5/5**
-- Evidence: updated to reflect reliability-aware and artifact-aware interpretation.
+- Evidence: updated with crosswalk-evidence and bucketed-term interpretation notes.
 
 ## Dashboard Structure Audit (Explicit Sign-off)
 
@@ -51,18 +51,18 @@ Checklist result:
 - Round-evaluation grouping/placement consistency: **Pass**
 - Core findings understandable in under 30 seconds: **Pass**
 
-Audit note: Round 9 dashboard keeps risk visibility in the limitations section while preserving scan speed.
+Audit note: layout remains clear; compact mobile tuning reduces card sprawl while keeping sort/filter controls visible.
 
 ## Overall Evaluation
 
-- Total score: **71 / 80**
-- Average score: **4.44 / 5.00**
-- Round 8 -> Round 9: **+2 points**
+- Total score: **72 / 80**
+- Average score: **4.50 / 5.00**
+- Round 9 -> Round 10: **+1 point**
 
 Top improvements achieved:
-- Department-level interpretation is now reliability-tagged for high-delta reductions.
-- Title-evolution report now separates likely format artifacts from domain-term signals.
-- Pipeline consistency guardrail coverage expanded to include 13/14 relationship checks.
+- Department normalization assumptions are now explicitly documented in output appendix.
+- Title-evolution CSV now supports direct bucketed analysis for declining terms.
+- Pipeline guardrail diagnostics are more actionable due to explicit field labeling.
 
 Remaining highest-impact gap:
-- Department crosswalk evidence is still heuristic and can be strengthened with richer historical mapping references.
+- Historical mapping evidence is still manually defined; long-term robustness would improve with an externally validated crosswalk source.

@@ -115,7 +115,8 @@ def run_consistency_checks() -> list[str]:
         report_records = _extract_int(r"records:\s*([0-9]+)", report_txt)
         if report_records is not None and report_records != len(rows_96):
             issues.append(
-                f"10_mit_1996.json record count mismatch: json={len(rows_96)} vs extraction_report={report_records}"
+                "mismatch[file=10_mit_1996.json metric=records "
+                f"actual={len(rows_96)} expected_from=10_mit_1996_extraction_report.txt expected={report_records}]"
             )
 
     if p_24.exists() and p_12_delta.exists() and p_12_summary.exists():
@@ -123,7 +124,10 @@ def run_consistency_checks() -> list[str]:
         summary_txt = p_12_summary.read_text(encoding="utf-8", errors="replace")
         summary_24 = _extract_int(r"2024 subjects:\s*([0-9]+)", summary_txt)
         if summary_24 is not None and summary_24 != rows_24:
-            issues.append(f"11_mit_2024.json count mismatch: json={rows_24} vs 12_summary={summary_24}")
+            issues.append(
+                "mismatch[file=11_mit_2024.json metric=records "
+                f"actual={rows_24} expected_from=12_course_offerings_summary.txt field='2024 subjects' expected={summary_24}]"
+            )
 
     if p_13_csv.exists() and p_14_txt.exists():
         has_pos = False
@@ -147,9 +151,15 @@ def run_consistency_checks() -> list[str]:
         new_by_2024 = _extract_int(r"New by 2024 \(raw\):\s*([0-9]+)", txt14) or 0
 
         if discontinued > 0 and not has_neg:
-            issues.append("13/14 mismatch: discontinued subjects exist but 13_title_evolution has no negative deltas")
+            issues.append(
+                "mismatch[files=13_title_evolution.csv,14_new_and_old.txt "
+                "rule='discontinued>0 => negative_deltas_exist' actual=negative_deltas_absent]"
+            )
         if new_by_2024 > 0 and not has_pos:
-            issues.append("13/14 mismatch: newly introduced subjects exist but 13_title_evolution has no positive deltas")
+            issues.append(
+                "mismatch[files=13_title_evolution.csv,14_new_and_old.txt "
+                "rule='new_by_2024>0 => positive_deltas_exist' actual=positive_deltas_absent]"
+            )
 
     return issues
 

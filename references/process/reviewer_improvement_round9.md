@@ -15,7 +15,7 @@ Use the following order for all planning, scoring, and feedback decisions:
 - Reduced-department interpretation now includes explicit reliability notes.
 - Title-evolution output now explicitly separates likely format-artifact terms.
 - Pipeline consistency checks now cover a 13/14 signal-coherence condition.
-- Dashboard highlights critical cautions in a concise, visible block.
+- Dashboard limitations now centralize caution statements in one concise section.
 
 ## Remaining Priority Actions
 

@@ -122,6 +122,12 @@ def main() -> None:
     lines.append("- Department values are normalized with a historical alias crosswalk (for example, 6 and 6-* -> 6).")
     lines.append("- Differences mix true curriculum change with catalog formatting/numbering evolution.")
     lines.append("- Extreme deltas should be interpreted with caution unless cross-validated with historical departmental metadata.")
+    lines.append("")
+    lines.append("Crosswalk Evidence Appendix:")
+    lines.append("- Canonical mapping rules used in this run:")
+    for alias, canonical in sorted(DEPT_ALIASES.items()):
+        lines.append(f"  - {alias} -> {canonical}")
+    lines.append("- Additional rule: course codes starting with `6-` or `6.` are normalized to `6`.")
 
     out_txt = OUTPUT_DIR / "12_course_offerings_summary.txt"
     write_text(out_txt, "\n".join(lines) + "\n")

@@ -12,6 +12,8 @@ in department-level offerings, title vocabulary, and subject-code inventories.
   extraction-coverage differences.
 - The top reduced-department list now includes per-department reliability
   notes to separate strong vs caution-heavy interpretations.
+- A crosswalk evidence appendix is now included in the offerings summary to
+  make department normalization assumptions explicit.
 
 2. Terminology changes in titles
 - Rising terms included biology, systems, energy, data, learning, climate,
@@ -21,6 +23,9 @@ in department-level offerings, title vocabulary, and subject-code inventories.
   seminar, advanced, theory, topics) than by connector words.
 - A dedicated "likely format-artifact terms" section is now reported to keep
   formatting residue distinct from domain-topic decline interpretation.
+- The title-evolution CSV now includes a decline bucket field
+  (`format_artifact`, `domain_content`, `rising_or_neutral`) for direct
+  downstream filtering.
 - The lexical trend still indicates stronger emphasis on computational,
   life-science, and interdisciplinary themes in the modern catalog.
 
@@ -68,4 +73,5 @@ Limitations and next-step recommendation
 - MIT 1996 extraction mixes PDF text and OCR fallback; edge cases may remain
   and require manual spot checks.
 - Next round should strengthen historical crosswalk evidence for large negative
-  deltas while keeping current pipeline consistency checks.
+  deltas while keeping current pipeline consistency checks and improving
+  mismatch-message specificity.

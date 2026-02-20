@@ -57,6 +57,13 @@ LIKELY_FORMAT_ARTIFACTS = {
     "studies",
 }
 
+def decline_bucket(word: str, delta: int) -> str:
+    if delta < 0 and word in LIKELY_FORMAT_ARTIFACTS:
+        return "format_artifact"
+    if delta < 0:
+        return "domain_content"
+    return "rising_or_neutral"
+
 
 def normalize_title(raw_title: str) -> str:
     title = raw_title.strip()
@@ -97,24 +104,25 @@ def main() -> None:
     for w in words:
         c96 = d96.get(w, 0)
         c24 = d24.get(w, 0)
-        rows.append((w, c96, c24, c24 - c96))
+        delta = c24 - c96
+        rows.append((w, c96, c24, delta, decline_bucket(w, delta)))
 
     rows.sort(key=lambda x: x[3], reverse=True)
     out_csv = OUTPUT_DIR / "13_title_evolution.csv"
-    write_csv(out_csv, ["word", "count_1996", "count_2024", "delta"], rows)
+    write_csv(out_csv, ["word", "count_1996", "count_2024", "delta", "decline_bucket"], rows)
 
     top_gain = rows[:20]
     top_loss = sorted(rows, key=lambda x: x[3])[:20]
     lines = ["Title Evolution", "===============", "", "Top Rising Terms:"]
-    lines.extend([f"- {w}: {a} -> {b} ({d:+d})" for w, a, b, d in top_gain])
+    lines.extend([f"- {w}: {a} -> {b} ({d:+d})" for w, a, b, d, _ in top_gain])
     lines.append("")
     lines.append("Top Declining Terms:")
-    lines.extend([f"- {w}: {a} -> {b} ({d:+d})" for w, a, b, d in top_loss])
+    lines.extend([f"- {w}: {a} -> {b} ({d:+d})" for w, a, b, d, _ in top_loss])
     lines.append("")
     lines.append("Likely Format-Artifact Terms (from declining list):")
-    artifacts = [r for r in top_loss if r[0] in LIKELY_FORMAT_ARTIFACTS]
+    artifacts = [r for r in top_loss if r[4] == "format_artifact"]
     if artifacts:
-        lines.extend([f"- {w}: {a} -> {b} ({d:+d})" for w, a, b, d in artifacts])
+        lines.extend([f"- {w}: {a} -> {b} ({d:+d})" for w, a, b, d, _ in artifacts])
     else:
         lines.append("- none detected in current top declining terms")
 
