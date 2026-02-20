@@ -48,6 +48,15 @@ EXTRA_STOPWORDS = {
     "staff",
 }
 
+LIKELY_FORMAT_ARTIFACTS = {
+    "seminar",
+    "topics",
+    "advanced",
+    "problems",
+    "equivalent",
+    "studies",
+}
+
 
 def normalize_title(raw_title: str) -> str:
     title = raw_title.strip()
@@ -101,6 +110,13 @@ def main() -> None:
     lines.append("")
     lines.append("Top Declining Terms:")
     lines.extend([f"- {w}: {a} -> {b} ({d:+d})" for w, a, b, d in top_loss])
+    lines.append("")
+    lines.append("Likely Format-Artifact Terms (from declining list):")
+    artifacts = [r for r in top_loss if r[0] in LIKELY_FORMAT_ARTIFACTS]
+    if artifacts:
+        lines.extend([f"- {w}: {a} -> {b} ({d:+d})" for w, a, b, d in artifacts])
+    else:
+        lines.append("- none detected in current top declining terms")
 
     out_txt = OUTPUT_DIR / "13_title_evolution_summary.txt"
     write_text(out_txt, "\n".join(lines) + "\n")

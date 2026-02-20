@@ -453,6 +453,8 @@ def build_html(
     .bar {{ height:100%; border-radius:999px; }}
     .value {{ text-align:right; font-size:14px; color:#4f5c66; }}
     .note {{ font-size:14px; color:var(--muted); margin-top:10px; line-height:1.45; }}
+    .risk-list {{ margin:0; padding-left:18px; }}
+    .risk-list li {{ margin:4px 0; color:#3f4f5d; font-size:14px; }}
     .keyword-list {{ display:flex; flex-wrap:wrap; gap:8px; padding-left:0; list-style:none; margin:0 0 10px; }}
     .keyword-list li {{ margin:0; color:#4b5b68; border:1px solid #cfd6de; background:#edf1f5; border-radius:999px; padding:6px 12px; font-size:13px; font-weight:600; }}
     .trace {{ margin-top:10px; border-top:1px dashed var(--line); padding-top:10px; }}
@@ -499,7 +501,7 @@ def build_html(
         <div class='panel-head'>
           <h2>Words in Course Titles (NE)</h2>
           <div class='panel-actions'>
-            <button class='btn sort-btn' data-target='freq-bars'>Sort: Desc</button>
+            <button type='button' class='btn sort-btn' data-target='freq-bars' data-order='desc'>Sort: Desc</button>
           </div>
         </div>
         <div id='freq-bars' class='bar-list'>{render_bar_list(freq_rows, '#6b8fbe')}</div>
@@ -509,7 +511,7 @@ def build_html(
         <div class='panel-head'>
           <h2>Department Growth (MIT 1996→Catalog Snapshot)</h2>
           <div class='panel-actions'>
-            <button class='btn sort-btn' data-target='dept-growth-bars'>Sort: Desc</button>
+            <button type='button' class='btn sort-btn' data-target='dept-growth-bars' data-order='desc'>Sort: Desc</button>
           </div>
         </div>
         <div id='dept-growth-bars' class='bar-list'>{render_bar_list(offering_up_rows, '#7eaf73')}</div>
@@ -518,7 +520,7 @@ def build_html(
         <div class='panel-head'>
           <h2>Department Reduction (MIT 1996→Catalog Snapshot)</h2>
           <div class='panel-actions'>
-            <button class='btn sort-btn' data-target='dept-reduction-bars' data-sort-mode='abs'>Sort: Desc</button>
+            <button type='button' class='btn sort-btn' data-target='dept-reduction-bars' data-sort-mode='abs' data-order='desc'>Sort: Desc</button>
           </div>
         </div>
         <div id='dept-reduction-bars' class='bar-list'>{render_bar_list(offering_down_rows, '#d96a72', use_abs=True)}</div>
@@ -528,7 +530,7 @@ def build_html(
         <div class='panel-head'>
           <h2>Rising Title Terms (MIT)</h2>
           <div class='panel-actions'>
-            <button class='btn sort-btn' data-target='title-rise-bars'>Sort: Desc</button>
+            <button type='button' class='btn sort-btn' data-target='title-rise-bars' data-order='desc'>Sort: Desc</button>
           </div>
         </div>
         <div id='title-rise-bars' class='bar-list'>{render_bar_list(title_up_rows, '#7eaf73')}</div>
@@ -537,7 +539,7 @@ def build_html(
         <div class='panel-head'>
           <h2>Declining Title Terms (MIT)</h2>
           <div class='panel-actions'>
-            <button class='btn sort-btn' data-target='title-down-bars' data-sort-mode='abs'>Sort: Desc</button>
+            <button type='button' class='btn sort-btn' data-target='title-down-bars' data-sort-mode='abs' data-order='desc'>Sort: Desc</button>
           </div>
         </div>
         <div id='title-down-bars' class='bar-list'>{render_bar_list(title_down_rows, '#d96a72', use_abs=True)}</div>
@@ -581,7 +583,7 @@ def build_html(
         <div class='panel-head'>
           <h2>Supplemental: Quality Score Trend by Round</h2>
           <div class='panel-actions'>
-            <button class='btn sort-btn' data-target='score-trend-bars'>Sort: Desc</button>
+            <button type='button' class='btn sort-btn' data-target='score-trend-bars' data-order='desc'>Sort: Desc</button>
           </div>
         </div>
         <ul class='keyword-list'>{change_html}</ul>
@@ -611,11 +613,13 @@ def build_html(
       }});
 
       document.querySelectorAll('.sort-btn').forEach((btn) => {{
-        btn.dataset.order = 'desc';
-        btn.addEventListener('click', () => {{
+        if (!btn.dataset.order) btn.dataset.order = 'desc';
+        btn.addEventListener('click', (ev) => {{
+          ev.preventDefault();
           const target = document.getElementById(btn.getAttribute('data-target'));
           if (!target) return;
           const rows = Array.from(target.querySelectorAll('.bar-row'));
+          if (rows.length < 2) return;
           const order = btn.dataset.order === 'desc' ? 'asc' : 'desc';
           const mode = btn.getAttribute('data-sort-mode') || 'value';
           rows.sort((a, b) => {{

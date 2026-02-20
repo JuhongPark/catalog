@@ -64,6 +64,16 @@ def reason_for_delta(dept: str, delta: int) -> str:
     return "Relatively stable between the two snapshots."
 
 
+def reliability_note(dept: str, delta: int) -> str:
+    if dept == "6" and delta < 0:
+        return "low (major renumbering/split effects likely)"
+    if abs(delta) >= 120:
+        return "low (very large shift, likely mixed with structural effects)"
+    if abs(delta) >= 60:
+        return "medium (possible mixed effect of true change + code evolution)"
+    return "high (smaller shift, more likely stable department mapping)"
+
+
 def main() -> None:
     ensure_directories()
     f1996 = OUTPUT_DIR / "10_mit_1996.json"
@@ -99,7 +109,13 @@ def main() -> None:
     lines.extend([f"- {d}: {n96} -> {n24} (delta {delta:+d}) | {reason_for_delta(d, delta)}" for d, n96, n24, delta in top_up])
     lines.append("")
     lines.append("Top Reduced Departments:")
-    lines.extend([f"- {d}: {n96} -> {n24} (delta {delta:+d}) | {reason_for_delta(d, delta)}" for d, n96, n24, delta in top_down])
+    lines.extend(
+        [
+            f"- {d}: {n96} -> {n24} (delta {delta:+d}) | {reason_for_delta(d, delta)} "
+            f"| reliability: {reliability_note(d, delta)}"
+            for d, n96, n24, delta in top_down
+        ]
+    )
 
     lines.append("")
     lines.append("Interpretation Notes:")

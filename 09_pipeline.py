@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import re
 import subprocess
@@ -105,6 +106,8 @@ def run_consistency_checks() -> list[str]:
     p_24 = OUTPUT_DIR / "11_mit_2024.json"
     p_12_delta = OUTPUT_DIR / "12_course_offerings_delta.csv"
     p_12_summary = OUTPUT_DIR / "12_course_offerings_summary.txt"
+    p_13_csv = OUTPUT_DIR / "13_title_evolution.csv"
+    p_14_txt = OUTPUT_DIR / "14_new_and_old.txt"
 
     if p_96.exists() and p_96_report.exists():
         rows_96 = read_json(p_96)
@@ -121,6 +124,32 @@ def run_consistency_checks() -> list[str]:
         summary_24 = _extract_int(r"2024 subjects:\s*([0-9]+)", summary_txt)
         if summary_24 is not None and summary_24 != rows_24:
             issues.append(f"11_mit_2024.json count mismatch: json={rows_24} vs 12_summary={summary_24}")
+
+    if p_13_csv.exists() and p_14_txt.exists():
+        has_pos = False
+        has_neg = False
+        with p_13_csv.open("r", encoding="utf-8", errors="replace") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                try:
+                    delta = int(row.get("delta", "0"))
+                except Exception:
+                    continue
+                if delta > 0:
+                    has_pos = True
+                elif delta < 0:
+                    has_neg = True
+                if has_pos and has_neg:
+                    break
+
+        txt14 = p_14_txt.read_text(encoding="utf-8", errors="replace")
+        discontinued = _extract_int(r"Discontinued since 1996 \(raw\):\s*([0-9]+)", txt14) or 0
+        new_by_2024 = _extract_int(r"New by 2024 \(raw\):\s*([0-9]+)", txt14) or 0
+
+        if discontinued > 0 and not has_neg:
+            issues.append("13/14 mismatch: discontinued subjects exist but 13_title_evolution has no negative deltas")
+        if new_by_2024 > 0 and not has_pos:
+            issues.append("13/14 mismatch: newly introduced subjects exist but 13_title_evolution has no positive deltas")
 
     return issues
 

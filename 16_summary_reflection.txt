@@ -10,6 +10,8 @@ in department-level offerings, title vocabulary, and subject-code inventories.
   68, -138), with additional major decreases in Courses 15, 4, 1, and 12.
 - These deltas likely mix real curriculum change with renumbering and
   extraction-coverage differences.
+- The top reduced-department list now includes per-department reliability
+  notes to separate strong vs caution-heavy interpretations.
 
 2. Terminology changes in titles
 - Rising terms included biology, systems, energy, data, learning, climate,
@@ -17,6 +19,8 @@ in department-level offerings, title vocabulary, and subject-code inventories.
 - Metadata-heavy legacy terms were reduced by stronger filtering. Declining
   terms are now dominated more by legacy catalog descriptors (for example
   seminar, advanced, theory, topics) than by connector words.
+- A dedicated "likely format-artifact terms" section is now reported to keep
+  formatting residue distinct from domain-topic decline interpretation.
 - The lexical trend still indicates stronger emphasis on computational,
   life-science, and interdisciplinary themes in the modern catalog.
 
@@ -44,9 +48,8 @@ in department-level offerings, title vocabulary, and subject-code inventories.
   for noisy legacy formatting lines.
 
 Data quality note
-- OCR runtime is now active (`tesseract` available), and OCR fallback is
-  integrated into extraction. Current records are generated with mixed text
-  sources (PDF text + OCR fallback).
+- OCR runtime is active (`tesseract` available), and OCR fallback is integrated
+  into extraction for image-heavy pages.
 
 Evidence sources used for this summary
 - `data/output/10_mit_1996_extraction_report.txt`
@@ -58,7 +61,11 @@ Evidence sources used for this summary
 - `data/output/pipeline_snapshot.json`
 
 Limitations and next-step recommendation
-- Historical crosswalk quality and legacy catalog formatting still influence
-  several deltas and lexical trends.
-- This round keeps pipeline numeric consistency checks; next round should focus
-  on stronger department crosswalk validation for large negative deltas.
+- Department-level deltas can reflect renumbering/organizational restructuring,
+  not only true expansion or shrinkage.
+- Declining title terms still include likely legacy-format artifacts, so
+  lexical decline should be interpreted with caution.
+- MIT 1996 extraction mixes PDF text and OCR fallback; edge cases may remain
+  and require manual spot checks.
+- Next round should strengthen historical crosswalk evidence for large negative
+  deltas while keeping current pipeline consistency checks.
