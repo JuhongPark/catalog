@@ -11,10 +11,19 @@ from __future__ import annotations
 
 import re
 
-from catalog_utils import OUTPUT_DIR, ensure_directories, read_json, word_counts, write_csv, write_text
+from catalog_utils import DEFAULT_STOPWORDS, OUTPUT_DIR, ensure_directories, read_json, word_counts, write_csv, write_text
 
 
 EXTRA_STOPWORDS = {
+    "in",
+    "of",
+    "or",
+    "the",
+    "and",
+    "is",
+    "for",
+    "to",
+    "with",
     "prereq",
     "units",
     "permission",
@@ -44,7 +53,8 @@ def normalize_title(raw_title: str) -> str:
 def top_words(rows: list[dict]) -> dict[str, int]:
     titles = [normalize_title(r.get("title", "")) for r in rows if r.get("title")]
     titles = [x for x in titles if x]
-    return dict(word_counts(titles, stopwords=EXTRA_STOPWORDS))
+    stopwords = set(DEFAULT_STOPWORDS) | EXTRA_STOPWORDS
+    return dict(word_counts(titles, stopwords=stopwords))
 
 
 def main() -> None:

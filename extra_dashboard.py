@@ -10,7 +10,9 @@
 from __future__ import annotations
 
 import csv
+import json
 import re
+from collections import Counter
 from html import escape
 
 from catalog_utils import BASE_DIR, OUTPUT_DIR, ensure_directories, write_text
@@ -104,6 +106,36 @@ def read_reviewer_priorities() -> list[str]:
     return out
 
 
+def read_confidence_diagnostics() -> tuple[list[tuple[str, int]], list[tuple[str, int]], str]:
+    path = OUTPUT_DIR / "10_mit_1996.json"
+    if not path.exists():
+        return ([], [], "No MIT 1996 extraction file found.")
+    rows = json.loads(path.read_text(encoding="utf-8"))
+    if not rows:
+        return ([], [], "MIT 1996 extraction file is empty.")
+
+    bins = Counter()
+    flags = Counter()
+    for r in rows:
+        conf = float(r.get("confidence", 0.0))
+        if conf < 0.45:
+            bins["<0.45"] += 1
+        elif conf < 0.65:
+            bins["0.45-0.64"] += 1
+        elif conf < 0.80:
+            bins["0.65-0.79"] += 1
+        else:
+            bins[">=0.80"] += 1
+        for flag in r.get("quality_flags", []):
+            flags[flag] += 1
+
+    ordered_bins = [(k, bins.get(k, 0)) for k in ("<0.45", "0.45-0.64", "0.65-0.79", ">=0.80")]
+    top_flags = flags.most_common(8)
+    avg_conf = sum(float(r.get("confidence", 0.0)) for r in rows) / max(len(rows), 1)
+    note = f"MIT 1996 records: {len(rows)} | avg confidence: {avg_conf:.3f}"
+    return (ordered_bins, top_flags, note)
+
+
 def render_bar_list(rows: list[tuple[str, int]], color: str, use_abs: bool = False) -> str:
     if not rows:
         return "<p>No data</p>"
@@ -157,6 +189,9 @@ def build_html(
     top_improvements: list[str],
     reviewer_priorities: list[str],
     score_round_label: str,
+    confidence_bins: list[tuple[str, int]],
+    confidence_flags: list[tuple[str, int]],
+    confidence_note: str,
 ) -> str:
     top_html = "".join(f"<li>{escape(item)}</li>" for item in top_improvements) or "<li>N/A</li>"
     pri_html = "".join(f"<li>{escape(item)}</li>" for item in reviewer_priorities[:4]) or "<li>N/A</li>"
@@ -232,6 +267,13 @@ def build_html(
         <pre>{escape(breadth_summary)}</pre>
       </section>
       <section class='card'>
+        <h2>MIT 1996 Extraction Confidence</h2>
+        {render_bar_list(confidence_bins, '#3f7d20')}
+        <h2 style='margin-top:14px'>Top Quality Flags</h2>
+        {render_bar_list(confidence_flags, '#8a4f3d')}
+        <div class='note'>{escape(confidence_note)}</div>
+      </section>
+      <section class='card'>
         <h2>{escape(score_round_label)} Grading & Evaluation</h2>
         <p><b>Total score:</b> {escape(total_score)}<br/><b>Average score:</b> {escape(avg_score)}</p>
         <p><b>Top improvements achieved</b></p>
@@ -262,6 +304,7 @@ def main() -> None:
     score_rows = read_round_scores()
     total_score, avg_score, top_improvements, score_round_label = read_scorecard_summary()
     reviewer_priorities = read_reviewer_priorities()
+    confidence_bins, confidence_flags, confidence_note = read_confidence_diagnostics()
     breadth_path = OUTPUT_DIR / "15_curriculum_breadth.txt"
     breadth_summary = breadth_path.read_text(encoding="utf-8") if breadth_path.exists() else "No breadth summary yet."
 
@@ -278,6 +321,9 @@ def main() -> None:
         top_improvements,
         reviewer_priorities,
         score_round_label,
+        confidence_bins,
+        confidence_flags,
+        confidence_note,
     )
 
     runtime_file = OUTPUT_DIR / "analysis_dashboard.html"

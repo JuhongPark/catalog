@@ -13,7 +13,7 @@ import re
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
-from catalog_utils import OUTPUT_DIR, ensure_directories, normalize_whitespace, parse_course_code, strip_html, write_json
+from catalog_utils import OUTPUT_DIR, ensure_directories, normalize_whitespace, strip_html, write_json
 
 
 BASE_URL = "https://student.mit.edu/catalog/index.cgi"
@@ -40,6 +40,22 @@ def extract_subject_urls(html: str) -> list[str]:
     return out
 
 
+def extract_course_code(title: str) -> str:
+    title = normalize_whitespace(title)
+    # MIT current catalog commonly uses 4-digit decimals (for example 6.1000).
+    m = re.match(r"^([A-Z]{2,5}\s*\d{1,4}[A-Z]?)\b", title)
+    if m:
+        return normalize_whitespace(m.group(1))
+    m = re.match(r"^(\d{1,2}\.\d{2,4}[A-Z]?)\b", title)
+    if m:
+        return normalize_whitespace(m.group(1))
+    # Renumbered/newer families may include dash-based prefixes.
+    m = re.match(r"^(\d{1,2}-\d{1,2}\.\d{2,4}[A-Z]?)\b", title)
+    if m:
+        return normalize_whitespace(m.group(1))
+    return ""
+
+
 def parse_courses(html: str, url: str) -> list[dict]:
     courses = []
     seen = set()
@@ -55,7 +71,7 @@ def parse_courses(html: str, url: str) -> list[dict]:
         if not title:
             continue
 
-        code = parse_course_code(title)
+        code = extract_course_code(title)
         if not code or len(title) < 8:
             continue
 
@@ -82,7 +98,7 @@ def parse_courses(html: str, url: str) -> list[dict]:
             {
                 "source": "mit",
                 "year": 2024,
-                "dept": code.split()[0] if " " in code else code.split(".")[0],
+                "dept": re.split(r"[.\s-]", code, maxsplit=1)[0],
                 "course_code": code,
                 "title": title,
                 "description": description,
